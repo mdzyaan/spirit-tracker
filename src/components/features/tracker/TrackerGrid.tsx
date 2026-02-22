@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import type { RootState } from "@/store/store";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,12 +30,15 @@ import {
 } from "./trackerTableUtils";
 import { getHoverDimClass } from "./cellStyles";
 import { cn } from "@/lib/utils";
+import { getUserSettings } from "@/services/user-settings.service";
+import { getFarzStatesForGender } from "@/types/tracker";
+import type { FarzSalahState } from "@/types/tracker";
 
 const columnHelper = createColumnHelper<TrackerDay>();
 
 const FARZ_FIELDS = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 
-function buildColumns() {
+function buildColumns(allowedFarzStates: FarzSalahState[] | null) {
   return [
     columnHelper.display({
       id: "date",
@@ -73,7 +76,13 @@ function buildColumns() {
       columnHelper.display({
         id: field,
         header: field.charAt(0).toUpperCase() + field.slice(1),
-        cell: ({ row }) => <PrayerTrackerCell day={row.original} field={field} />,
+        cell: ({ row }) => (
+          <PrayerTrackerCell
+            day={row.original}
+            field={field}
+            allowedStates={allowedFarzStates ?? undefined}
+          />
+        ),
         size: 80,
       })
     ),
@@ -91,8 +100,6 @@ function buildColumns() {
     }),
   ];
 }
-
-const COLUMNS = buildColumns();
 
 const SKELETON_ROW_COUNT = 15;
 
@@ -121,6 +128,27 @@ export function TrackerGrid() {
   const dispatch = useAppDispatch();
   const { user, session, initialized } = useAuth();
   const userId = user?.id ?? session?.user?.id;
+  const [gender, setGender] = useState<"male" | "female" | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    getUserSettings(userId)
+      .then((row) => {
+        const g = row?.gender;
+        setGender(g === "male" || g === "female" ? g : null);
+      })
+      .catch(() => setGender(null));
+  }, [userId]);
+
+  const allowedFarzStates = useMemo(
+    () => getFarzStatesForGender(gender),
+    [gender]
+  );
+
+  const columns = useMemo(
+    () => buildColumns(allowedFarzStates),
+    [allowedFarzStates]
+  );
 
   useTracker();
 
@@ -141,7 +169,7 @@ export function TrackerGrid() {
     !initialized || status === "idle" || status === "loading";
   const table = useReactTable({
     data: isSkeletonTable ? PLACEHOLDER_DAYS : days,
-    columns: COLUMNS,
+    columns,
     getCoreRowModel: getCoreRowModel(),
     initialState: {
       columnPinning: { left: ["date", "day"] },

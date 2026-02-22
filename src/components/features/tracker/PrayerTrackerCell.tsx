@@ -14,6 +14,8 @@ import { FARZ_SALAH_STATES } from "@/types/tracker";
 type Props = {
   day: TrackerDay;
   field: TrackerField;
+  /** When provided, only these options are shown (e.g. filtered by gender). Current state still displays even if not in list. */
+  allowedStates?: FarzSalahState[];
 };
 
 const FARZ_LABELS: Record<FarzSalahState, string> = {
@@ -32,11 +34,12 @@ function FarzIcon({ state }: { state: FarzSalahState | null }) {
   return <div className="h-5 w-5 " />;
 }
 
-export function PrayerTrackerCell({ day, field }: Props) {
+export function PrayerTrackerCell({ day, field, allowedStates }: Props) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((s) => s.auth.session?.user?.id ?? s.auth.user?.id ?? "");
   const state = day[field] as FarzSalahState | null;
   const [open, setOpen] = useState(false);
+  const options = allowedStates ?? FARZ_SALAH_STATES;
 
   const handleSelect = (value: FarzSalahState | null) => {
     const previous = state;
@@ -79,7 +82,7 @@ export function PrayerTrackerCell({ day, field }: Props) {
       </PopoverTrigger>
       <PopoverContent align="center" className="w-auto p-1">
         <div className="flex flex-col gap-0.5">
-          {FARZ_SALAH_STATES.map((s) => (
+          {options.map((s) => (
             <button
               key={s}
               type="button"

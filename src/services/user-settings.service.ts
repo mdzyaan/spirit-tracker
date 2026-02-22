@@ -33,6 +33,7 @@ export async function upsertUserSettings(
     calculation_method: "calculation_method" in payload ? (payload.calculation_method ?? 2) : (existing?.calculation_method ?? 2),
     timezone: "timezone" in payload ? (payload.timezone ?? null) : (existing?.timezone ?? null),
     ramadan_override_start: "ramadan_override_start" in payload ? (payload.ramadan_override_start ?? null) : (existing?.ramadan_override_start ?? null),
+    gender: "gender" in payload ? (payload.gender ?? null) : (existing?.gender ?? null),
   };
   const { data, error } = await supabase
     .from("user_settings")

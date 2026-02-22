@@ -40,3 +40,16 @@ export const FARZ_COMPLETED_STATES: FarzSalahState[] = [
 export function isFarzCompleted(state: FarzSalahState | null): boolean {
   return state !== null && FARZ_COMPLETED_STATES.includes(state);
 }
+
+/** Farz options to show in the tracker by gender: male = no N/A, female = no Mosque, null = all. */
+export function getFarzStatesForGender(
+  gender: "male" | "female" | null
+): FarzSalahState[] {
+  if (gender === "male") {
+    return FARZ_SALAH_STATES.filter((s) => s !== "not_applicable");
+  }
+  if (gender === "female") {
+    return FARZ_SALAH_STATES.filter((s) => s !== "mosque");
+  }
+  return [...FARZ_SALAH_STATES];
+}

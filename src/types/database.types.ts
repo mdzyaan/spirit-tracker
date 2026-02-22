@@ -45,6 +45,7 @@ export interface Database {
           calculation_method: number;
           timezone: string | null;
           ramadan_override_start: string | null;
+          gender: string | null;
           created_at: string;
         };
         Insert: {
@@ -56,6 +57,7 @@ export interface Database {
           calculation_method?: number;
           timezone?: string | null;
           ramadan_override_start?: string | null;
+          gender?: string | null;
           created_at?: string;
         };
         Update: {
@@ -67,6 +69,7 @@ export interface Database {
           calculation_method?: number;
           timezone?: string | null;
           ramadan_override_start?: string | null;
+          gender?: string | null;
           created_at?: string;
         };
       };

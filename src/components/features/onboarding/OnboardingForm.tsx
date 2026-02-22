@@ -17,6 +17,7 @@ import {
 } from "@/lib/calculation-methods";
 import { getCountryCodeFromCoords } from "@/services/geo.service";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const RAMADAN_HIJRI_MONTH = 9;
 
@@ -28,6 +29,7 @@ type FormState = {
   country: string;
   calculation_method: number;
   ramadan_override_start: string | null;
+  gender: "male" | "female" | null;
 };
 
 const defaultState: FormState = {
@@ -36,6 +38,7 @@ const defaultState: FormState = {
   country: "",
   calculation_method: 2,
   ramadan_override_start: null,
+  gender: null,
 };
 
 export function OnboardingForm() {
@@ -114,6 +117,7 @@ export function OnboardingForm() {
         calculation_method: form.calculation_method,
         timezone,
         ramadan_override_start: form.ramadan_override_start || null,
+        gender: form.gender ?? undefined,
       });
 
       const today = new Date();
@@ -149,7 +153,7 @@ export function OnboardingForm() {
         <CardTitle>Set up Ramadan</CardTitle>
         <CardDescription>
           {step === 1 && "Set your location for prayer times and Hijri dates."}
-          {step === 2 && "Choose a calculation method for lunar dates."}
+          {step === 2 && "Choose your gender."}
           {step === 3 && "Review and save."}
         </CardDescription>
       </CardHeader>
@@ -200,37 +204,57 @@ export function OnboardingForm() {
         {step === 2 && (
           <>
             <div className="space-y-2">
-              <Label>Calculation method</Label>
-              <div className="flex flex-col gap-2">
-                {CALCULATION_METHODS.map(({ value, label }) => (
-                  <label
-                    key={value}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md border border-border p-3 cursor-pointer",
-                      form.calculation_method === value &&
-                        "border-primary bg-muted/50"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="method"
-                      value={value}
-                      checked={form.calculation_method === value}
-                      onChange={() =>
-                        setForm((prev) => ({ ...prev, calculation_method: value }))
-                      }
-                      className="h-4 w-4"
-                    />
-                    <span className="text-sm font-medium">{label}</span>
-                  </label>
-                ))}
+              <Label>Choose your gender</Label>
+              <div className="flex gap-4 justify-center flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, gender: "male" }))}
+                  className={cn(
+                    "flex flex-col items-center gap-2 rounded-lg border-2 p-3 transition-colors",
+                    form.gender === "male"
+                      ? "border-primary bg-muted/50"
+                      : "border-border hover:border-muted-foreground/50"
+                  )}
+                >
+                  <Image
+                    src="/assets/muslim-boy.png"
+                    alt="Boy"
+                    width={120}
+                    height={120}
+                    className="rounded-full object-cover"
+                  />
+                  <span className="text-sm font-medium text-foreground">Boy</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, gender: "female" }))}
+                  className={cn(
+                    "flex flex-col items-center gap-2 rounded-lg border-2 p-3 transition-colors",
+                    form.gender === "female"
+                      ? "border-primary bg-muted/50"
+                      : "border-border hover:border-muted-foreground/50"
+                  )}
+                >
+                  <Image
+                    src="/assets/muslim-girl.png"
+                    alt="Girl"
+                    width={120}
+                    height={120}
+                    className="rounded-full object-cover"
+                  />
+                  <span className="text-sm font-medium text-foreground">Girl</span>
+                </button>
               </div>
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => setStep(1)}>
                 Back
               </Button>
-              <Button type="button" onClick={() => setStep(3)}>
+              <Button
+                type="button"
+                onClick={() => setStep(3)}
+                disabled={form.gender === null}
+              >
                 Next
               </Button>
             </div>
@@ -239,19 +263,84 @@ export function OnboardingForm() {
 
         {step === 3 && (
           <>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>
+            <div className="space-y-3 text-sm">
+              <p className="text-muted-foreground">
                 Location:{" "}
                 {form.latitude != null && form.longitude != null
                   ? `${form.latitude.toFixed(2)}, ${form.longitude.toFixed(2)}`
                   : "—"}
                 {form.country && ` · ${form.country}`}
               </p>
-              <p>
-                Method:{" "}
-                {CALCULATION_METHODS.find((m) => m.value === form.calculation_method)
-                  ?.label ?? form.calculation_method}
-              </p>
+              <div className="space-y-2">
+                <Label>Gender (confirm or change)</Label>
+                <div className="flex gap-4 justify-center flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, gender: "male" }))}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border-2 p-2 transition-colors",
+                      form.gender === "male"
+                        ? "border-primary bg-muted/50"
+                        : "border-border hover:border-muted-foreground/50"
+                    )}
+                  >
+                    <Image
+                      src="/assets/muslim-boy.png"
+                      alt="Boy"
+                      width={80}
+                      height={80}
+                      className="rounded-full object-cover"
+                    />
+                    <span className="text-xs font-medium text-foreground">Boy</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, gender: "female" }))}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border-2 p-2 transition-colors",
+                      form.gender === "female"
+                        ? "border-primary bg-muted/50"
+                        : "border-border hover:border-muted-foreground/50"
+                    )}
+                  >
+                    <Image
+                      src="/assets/muslim-girl.png"
+                      alt="Girl"
+                      width={80}
+                      height={80}
+                      className="rounded-full object-cover"
+                    />
+                    <span className="text-xs font-medium text-foreground">Girl</span>
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Calculation method</Label>
+                <div className="flex flex-col gap-2">
+                  {CALCULATION_METHODS.map(({ value, label }) => (
+                    <label
+                      key={value}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md border border-border p-3 cursor-pointer",
+                        form.calculation_method === value &&
+                          "border-primary bg-muted/50"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="method"
+                        value={value}
+                        checked={form.calculation_method === value}
+                        onChange={() =>
+                          setForm((prev) => ({ ...prev, calculation_method: value }))
+                        }
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm font-medium">{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => setStep(2)}>
@@ -260,7 +349,7 @@ export function OnboardingForm() {
               <Button
                 type="button"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || form.gender === null}
               >
                 {saving ? "Saving…" : "Save and continue"}
               </Button>
