@@ -80,5 +80,5 @@ export async function isRamadanDate(
   method: number
 ): Promise<boolean> {
   const hijri = await getHijriForDate(dateIso, latitude, longitude, method);
-  return hijri?.month?.number === RAMADAN_HIJRI_MONTH ?? false;
+  return hijri?.month?.number === RAMADAN_HIJRI_MONTH;
 }

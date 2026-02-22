@@ -8,7 +8,6 @@ import { getTaraweehCellContainerClassName } from "./cellStyles";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { TrackerDay } from "@/store/slices/trackerSlice";
-import { Minus } from "lucide-react";
 const TARAWEEH_OPTIONS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] as const;
 
 type Props = {

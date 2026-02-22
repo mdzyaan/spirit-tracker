@@ -8,6 +8,7 @@ import {
   updateDayField,
 } from "../slices/trackerSlice";
 import type { TrackerDay, TrackerField } from "../slices/trackerSlice";
+import type { FarzSalahState } from "@/types/tracker";
 import type { TrackerFieldValue } from "@/services/tracker.service";
 import * as trackerService from "@/services/tracker.service";
 
@@ -88,7 +89,13 @@ export const updateTrackerField = createAsyncThunk<
         value
       );
     } catch {
-      dispatch(updateDayField({ dayNumber, field, value: previousValue }));
+      dispatch(
+        updateDayField({
+          dayNumber,
+          field,
+          value: previousValue as number | boolean | FarzSalahState | null,
+        })
+      );
       throw new Error("Failed to save");
     }
   }

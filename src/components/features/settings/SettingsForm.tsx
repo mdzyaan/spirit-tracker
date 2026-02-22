@@ -9,11 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { COUNTRY_OPTIONS } from "@/lib/countries";
 import { CALCULATION_METHODS } from "@/lib/calculation-methods";
-import { getProfile, updateProfile } from "@/services/auth.service";
+import { getProfile } from "@/services/auth.service";
 import {
   getUserSettings,
   upsertUserSettings,
-  getRamadanOverrideStart,
   setRamadanOverrideStart,
 } from "@/services/user-settings.service";
 import { cn } from "@/lib/utils";
@@ -50,7 +49,7 @@ export function SettingsForm() {
     if (user) {
       getProfile(user.id).then((p) => dispatch(setUser(p ?? null)));
     }
-  }, [user?.id, dispatch]);
+  }, [user, dispatch]);
 
   const handleSaveCountryAndMethod = async () => {
     if (!userId) return;

@@ -89,14 +89,9 @@ export type TaraweehCellStyle = {
 
 export function getTaraweehCellClasses(value: number | null): TaraweehCellStyle {
   if (value != null && value > 0) {
-    const strongBorder =
-      value >= 8
-        ? "border-semantics-brand-border-2"
-        : "border-semantics-brand-border-1";
     return {
       bg: "bg-semantics-brand-bg-glow",
       border: ``,
-      // border: `border ${strongBorder}`,
       hover: "hover:bg-semantics-brand-bg-glow-hover",
     };
   }

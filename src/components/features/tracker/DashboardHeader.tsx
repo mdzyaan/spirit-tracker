@@ -1,11 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useAppSelector } from "@/store/hooks";
-import { Loader } from "@/components/shared/Loader";
 
 export function DashboardHeader() {
-  const status = useAppSelector((s) => s.tracker.status);
   return (
     <div className="flex items-center gap-3 p-3">
       <div className="relative w-10 h-10 shrink-0">

@@ -12,9 +12,7 @@ const startDateCache = new Map<number, string>();
  * Returns YYYY-MM-DD. Falls back to getRamadanStartDate on error.
  */
 export async function getRamadanStartByYear(year: number): Promise<string> {
-  const cached = startDateCache.get(year);
-  // if (cached) return cached;
-
+  // TODO: use startDateCache to return cached value when implemented
   const hijriYear = 1445 + (year - 2024);
   const url = `${ALADHAN_BASE}/hToGCalendar/${RAMADAN_HIJRI_MONTH}/${hijriYear}`;
 
