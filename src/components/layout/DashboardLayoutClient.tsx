@@ -29,7 +29,7 @@ export function DashboardLayoutClient({
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
       <aside className="w-full md:w-56 border-b md:border-b-0 md:border-r border-border bg-card p-4 flex flex-col">
-        <Link href="/dashboard" className="font-semibold text-foreground block mb-6">
+        <Link href="/" className="font-semibold text-foreground block mb-6">
           Ramadan Tracker
         </Link>
         <nav className="flex flex-row md:flex-col gap-1 flex-1">
