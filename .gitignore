@@ -1,0 +1,18 @@
+node_modules
+.next
+
+# Environment (required for security)
+.env
+.env*.local
+
+# Next.js / deployment
+out
+.vercel
+
+# OS / editor
+.DS_Store
+
+# Debug / build artifacts
+*.log
+npm-debug.log*
+.turbo

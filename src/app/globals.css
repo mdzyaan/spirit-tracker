@@ -1,0 +1,164 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-plus-jakarta-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+    /* Shadcn semantic tokens - monochromatic (grays + accent) */
+    --background: var(--semantics-base-bg-default);
+    --foreground: var(--semantics-base-fg-default);
+    --card: var(--semantics-base-bg-default);
+    --card-foreground: var(--semantics-base-fg-default);
+    --popover: var(--semantics-base-bg-default);
+    --popover-foreground: var(--semantics-base-fg-default);
+    --primary: var(--semantics-brand-bg-default);
+    --primary-foreground: var(--semantics-base-fg-invert);
+    --secondary: var(--semantics-base-bg-secondary-default);
+    --secondary-foreground: var(--semantics-base-fg-default);
+    --muted: var(--semantics-base-bg-muted-default);
+    --muted-foreground: var(--semantics-base-fg-muted);
+    --accent: var(--semantics-base-bg-hover);
+    --accent-foreground: var(--semantics-base-fg-default);
+    --destructive: var(--semantics-error-bg-default);
+    --destructive-foreground: var(--semantics-base-fg-invert);
+    --border: var(--semantics-base-border-0);
+    --input: var(--semantics-base-border-1);
+    --ring: var(--semantics-brand-fg-bold);
+    --radius: 0.375rem;
+
+    /* Base - monochromatic grays */
+    --semantics-base-bg-default: #ffffff;
+    --semantics-base-bg-hover: #f5f5f4;
+    --semantics-base-bg-active: #e7e5e4;
+    --semantics-base-bg-muted-default: #f5f5f4;
+    --semantics-base-bg-muted-hover: #eeedec;
+    --semantics-base-bg-muted-active: #e7e5e4;
+    --semantics-base-bg-secondary-default: #e7e5e4;
+    --semantics-base-bg-secondary-hover: #dfdcdb;
+    --semantics-base-bg-secondary-active: #d6d3d1;
+    --semantics-base-bg-dim-default: #fafaf9;
+    --semantics-base-bg-invert-default: #1c1917;
+    --semantics-base-bg-invert-hover: #0c0a09;
+    --semantics-base-fg-default: #1c1917;
+    --semantics-base-fg-muted: #57534e;
+    --semantics-base-fg-muted-2: #78716c;
+    --semantics-base-fg-muted-3: #a8a29e;
+    --semantics-base-fg-invert: #fafaf9;
+    --semantics-base-border-0: #f5f5f4;
+    --semantics-base-border-1: #e7e5e4;
+    --semantics-base-border-2: #d6d3d1;
+    --semantics-base-border-3: #a8a29e;
+    --semantics-base-shadow: #1c191719;
+
+    /* Brand accent - calm teal */
+    --semantics-brand-bg-default: #0d9488;
+    --semantics-brand-bg-hover: #0f766e;
+    --semantics-brand-bg-active: #115e59;
+    --semantics-brand-bg-soft-default: #ccfbf126;
+    --semantics-brand-bg-soft-hover: #ccfbf133;
+    --semantics-brand-bg-soft-active: #ccfbf140;
+    --semantics-brand-bg-glow-default: #f0fdfa;
+    --semantics-brand-bg-glow-hover: #e2f8f3;
+    --semantics-brand-bg-glow-active: #d1f5ed;
+    --semantics-brand-fg-link: #0d9488;
+    --semantics-brand-fg-bold: #134e4a;
+    --semantics-brand-fg-soft: #ccfbf1;
+    --semantics-brand-border-1: #b8eae4;
+    --semantics-brand-border-2: #7ed8ce;
+    --semantics-brand-border-3: #43c6b8;
+
+    /* Error */
+    --semantics-error-bg-default: #dc2626;
+    --semantics-error-bg-hover: #b91c1c;
+    --semantics-error-bg-active: #991b1b;
+    --semantics-error-bg-soft-default: #dc262626;
+    --semantics-error-bg-soft-hover: #dc262633;
+    --semantics-error-bg-soft-active: #dc262640;
+    --semantics-error-bg-glow-default: #fef2f2;
+    --semantics-error-bg-glow-hover: #fee2e2;
+    --semantics-error-bg-glow-active: #fecaca;
+    --semantics-error-fg-link: #dc2626;
+    --semantics-error-fg-bold: #991b1b;
+    --semantics-error-fg-soft: #fecaca;
+    --semantics-error-border-1: #fecaca;
+    --semantics-error-border-2: #fca5a5;
+    --semantics-error-border-3: #f87171;
+
+    /* Warning */
+    --semantics-warning-bg-default: #d97706;
+    --semantics-warning-bg-hover: #b45309;
+    --semantics-warning-bg-active: #92400e;
+    --semantics-warning-bg-soft-default: #d9770626;
+    --semantics-warning-bg-soft-hover: #d9770633;
+    --semantics-warning-bg-soft-active: #d9770640;
+    --semantics-warning-bg-glow-default: #fffbeb;
+    --semantics-warning-bg-glow-hover: #fef3c7;
+    --semantics-warning-bg-glow-active: #fde68a;
+    --semantics-warning-fg-link: #d97706;
+    --semantics-warning-fg-bold: #92400e;
+    --semantics-warning-fg-soft: #fef3c7;
+    --semantics-warning-border-1: #fde68a;
+    --semantics-warning-border-2: #fcd34d;
+    --semantics-warning-border-3: #fbbf24;
+
+    /* Base fg invert (for buttons) */
+    --semantics-base-fg-invert-white: #ffffff;
+    --semantics-base-fg-invert-black: #1c1917;
+  }
+
+  .dark {
+    --semantics-base-bg-default: #1c1917;
+    --semantics-base-bg-hover: #292524;
+    --semantics-base-bg-active: #44403c;
+    --semantics-base-bg-muted-default: #292524;
+    --semantics-base-bg-muted-hover: #44403c;
+    --semantics-base-bg-secondary-default: #44403c;
+    --semantics-base-bg-dim-default: #292524;
+    --semantics-base-bg-invert-default: #fafaf9;
+    --semantics-base-bg-invert-hover: #f5f5f4;
+    --semantics-base-fg-default: #fafaf9;
+    --semantics-base-fg-muted: #a8a29e;
+    --semantics-base-fg-muted-2: #78716c;
+    --semantics-base-fg-muted-3: #57534e;
+    --semantics-base-fg-invert: #1c1917;
+    --semantics-base-fg-invert-white: #ffffff;
+    --semantics-base-fg-invert-black: #1c1917;
+    --semantics-base-border-0: #44403c;
+    --semantics-base-border-1: #57534e;
+    --semantics-base-border-2: #78716c;
+    --semantics-base-border-3: #a8a29e;
+    --semantics-brand-bg-glow-default: #042f2e;
+    --semantics-brand-bg-glow-hover: #0e3938;
+    --semantics-brand-bg-glow-active: #104c4a;
+    --semantics-error-bg-glow-default: #450a0a;
+    --semantics-error-bg-glow-hover: #7f1d1d;
+    --semantics-error-bg-glow-active: #991b1b;
+    --semantics-warning-bg-glow-default: #422006;
+    --semantics-warning-bg-glow-hover: #713f12;
+    --semantics-warning-bg-glow-active: #854d0e;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-plus-jakarta-sans);
+    background-color: var(--semantics-base-bg-dim-default);
+    color: var(--semantics-base-fg-default);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
