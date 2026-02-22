@@ -31,7 +31,9 @@ export async function updateSession(request: NextRequest) {
   const isProtected =
     request.nextUrl.pathname.startsWith("/dashboard") ||
     request.nextUrl.pathname.startsWith("/stats") ||
-    request.nextUrl.pathname.startsWith("/settings");
+    request.nextUrl.pathname.startsWith("/settings") ||
+    request.nextUrl.pathname.startsWith("/profile") ||
+    request.nextUrl.pathname.startsWith("/invite");
 
   if (isProtected && !session) {
     const redirect = new URL("/login", request.url);

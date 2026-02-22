@@ -5,6 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/services/auth.service";
+import { useAppSelector } from "@/store/hooks";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -19,12 +27,22 @@ export function DashboardLayoutClient({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const user = useAppSelector((s) => s.auth.user);
+  const session = useAppSelector((s) => s.auth.session);
+  const displayName = user?.name?.trim() || null;
+  const email = session?.user?.email ?? "";
 
   const handleSignOut = async () => {
     await signOut();
     router.push("/login");
     router.refresh();
   };
+
+  const triggerLabel = displayName
+    ? email
+      ? `${displayName} | ${email}`
+      : displayName
+    : email || "Account";
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
@@ -45,14 +63,33 @@ export function DashboardLayoutClient({
             </Link>
           ))}
         </nav>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start text-muted-foreground"
-          onClick={handleSignOut}
-        >
-          Sign out
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 text-muted-foreground h-auto py-2"
+            >
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarImage src={user?.avatar_url ?? undefined} alt="" />
+                <AvatarFallback className="text-xs">
+                  {displayName
+                    ? displayName.slice(0, 2).toUpperCase()
+                    : email
+                      ? email.slice(0, 2).toUpperCase()
+                      : "?"}
+                </AvatarFallback>
+              </Avatar>
+              <span className="min-w-0 truncate text-left text-sm">{triggerLabel}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem asChild>
+              <Link href="/profile">My profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </aside>
       <main className="max-h-[100dvh]  w-full overflow-x-hidden overflow-y-auto">{children}</main>
     </div>
