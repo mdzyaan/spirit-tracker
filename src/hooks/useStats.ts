@@ -4,8 +4,10 @@ import { useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { setStats, setChartsData, setStatsLoading } from "@/store/slices/statsSlice";
 import type { TrackerDay } from "@/store/slices/trackerSlice";
+import { isFarzCompleted, type FarzSalahState } from "@/types/tracker";
 
-const PRAYER_FIELDS = ["fajr", "dhuhr", "asr", "maghrib", "isha", "taraweeh"] as const;
+const FARZ_FIELDS = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
+const PRAYER_FIELDS = [...FARZ_FIELDS, "taraweeh"] as const;
 
 function computeStreaks(days: TrackerDay[]): { current: number; longest: number } {
   let current = 0;
@@ -40,10 +42,13 @@ export function useStats() {
     const totalQuranDays = days.filter((d) => d.quran).length;
     const totalCharityDays = days.filter((d) => d.charity).length;
     const totalSalahSlots = days.length * PRAYER_FIELDS.length;
-    const completedSalah = days.reduce(
-      (acc, d) => acc + PRAYER_FIELDS.filter((p) => d[p]).length,
-      0
-    );
+    const completedSalah = days.reduce((acc, d) => {
+      const farzCompleted = FARZ_FIELDS.filter((p) =>
+        isFarzCompleted(d[p] as FarzSalahState | null)
+      ).length;
+      const taraweehCompleted = (d.taraweeh ?? 0) > 0 ? 1 : 0;
+      return acc + farzCompleted + taraweehCompleted;
+    }, 0);
     const salahCompletionPercent =
       totalSalahSlots > 0 ? Math.round((completedSalah / totalSalahSlots) * 100) : 0;
     const { current: currentStreak, longest: longestStreak } = computeStreaks(days);
@@ -68,11 +73,13 @@ export function useStats() {
       { category: "Charity", completed: totalCharityDays, total: days.length },
     ];
 
-    const prayer = PRAYER_FIELDS.map((p) => ({
-      prayer: p,
-      completed: days.filter((d) => d[p]).length,
-      total: days.length,
-    }));
+    const prayer = PRAYER_FIELDS.map((p) => {
+      const completed =
+        p === "taraweeh"
+          ? days.filter((d) => (d.taraweeh ?? 0) > 0).length
+          : days.filter((d) => isFarzCompleted(d[p] as FarzSalahState | null)).length;
+      return { prayer: p, completed, total: days.length };
+    });
 
     dispatch(setChartsData({ heatmap, streak, completion, prayer }));
   }, [trackerStatus, days, dispatch]);

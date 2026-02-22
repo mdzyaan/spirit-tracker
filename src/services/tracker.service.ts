@@ -86,25 +86,27 @@ export async function syncTrackerDatesToStart(
   return loadDays(userId, year);
 }
 
-export async function toggleDay(
+export type TrackerFieldValue = boolean | string | number | null;
+
+export async function updateDayField(
   userId: string,
   year: number,
   dayNumber: number,
   date: string,
   field: TrackerField,
-  value: boolean
+  value: TrackerFieldValue
 ): Promise<void> {
   const supabase = createClient();
-  const { error } = await supabase.from("tracker_days").upsert(
-    {
-      user_id: userId,
-      year,
-      day_number: dayNumber,
-      date,
-      [field]: value,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,year,day_number" }
-  );
+  const payload: Record<string, unknown> = {
+    user_id: userId,
+    year,
+    day_number: dayNumber,
+    date,
+    [field]: value,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabase
+    .from("tracker_days")
+    .upsert(payload, { onConflict: "user_id,year,day_number" });
   if (error) throw error;
 }

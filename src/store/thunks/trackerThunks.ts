@@ -5,9 +5,10 @@ import {
   setTrackerError,
   setTrackerYear,
   setTrackerDays,
-  toggleDayField,
+  updateDayField,
 } from "../slices/trackerSlice";
 import type { TrackerDay, TrackerField } from "../slices/trackerSlice";
+import type { TrackerFieldValue } from "@/services/tracker.service";
 import * as trackerService from "@/services/tracker.service";
 
 const FETCH_TIMEOUT_MS = 15000;
@@ -59,7 +60,7 @@ export const fetchTrackerData = createAsyncThunk<
   }
 });
 
-export const toggleTrackerField = createAsyncThunk<
+export const updateTrackerField = createAsyncThunk<
   void,
   {
     userId: string;
@@ -67,19 +68,27 @@ export const toggleTrackerField = createAsyncThunk<
     dayNumber: number;
     date: string;
     field: TrackerField;
-    value: boolean;
-    previous: boolean;
+    value: TrackerFieldValue;
+    previousValue: TrackerFieldValue;
   },
   { state: RootState; dispatch: AppDispatch }
 >(
-  "tracker/toggleField",
-  async ({ userId, year, dayNumber, date, field, value, previous }, { dispatch }) => {
-    // Optimistic update — already applied by the caller before dispatch
+  "tracker/updateField",
+  async (
+    { userId, year, dayNumber, date, field, value, previousValue },
+    { dispatch }
+  ) => {
     try {
-      await trackerService.toggleDay(userId, year, dayNumber, date, field, value);
+      await trackerService.updateDayField(
+        userId,
+        year,
+        dayNumber,
+        date,
+        field,
+        value
+      );
     } catch {
-      // Rollback
-      dispatch(toggleDayField({ dayNumber, field, value: previous }));
+      dispatch(updateDayField({ dayNumber, field, value: previousValue }));
       throw new Error("Failed to save");
     }
   }

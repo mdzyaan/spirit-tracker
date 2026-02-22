@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { FarzSalahState } from "@/types/tracker";
 
 export type TrackerField =
   | "quran"
@@ -38,12 +39,12 @@ export type TrackerDay = {
   date: string;
   quran: boolean;
   charity: boolean;
-  fajr: boolean;
-  dhuhr: boolean;
-  asr: boolean;
-  maghrib: boolean;
-  isha: boolean;
-  taraweeh: boolean;
+  fajr: FarzSalahState | null;
+  dhuhr: FarzSalahState | null;
+  asr: FarzSalahState | null;
+  maghrib: FarzSalahState | null;
+  isha: FarzSalahState | null;
+  taraweeh: number | null;
 };
 
 export type TrackerStatus = "idle" | "loading" | "succeeded" | "failed";
@@ -62,6 +63,25 @@ const initialState: TrackerState = {
   days: [],
 };
 
+/** Backward compatibility: normalize API payload (boolean farz/taraweeh → new types). */
+function normalizeTrackerDays(days: TrackerDay[]): TrackerDay[] {
+  return days.map((d) => {
+    const day = { ...d };
+    const farzFields = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
+    for (const f of farzFields) {
+      const v = (day as Record<string, unknown>)[f];
+      if (typeof v === "boolean") {
+        (day as Record<string, unknown>)[f] = v ? "on_time" : null;
+      }
+    }
+    const t = (day as Record<string, unknown>).taraweeh;
+    if (typeof t === "boolean") {
+      (day as Record<string, unknown>).taraweeh = t ? 20 : 0;
+    }
+    return day;
+  });
+}
+
 const trackerSlice = createSlice({
   name: "tracker",
   initialState,
@@ -76,16 +96,20 @@ const trackerSlice = createSlice({
       state.year = action.payload;
     },
     setTrackerDays(state, action: PayloadAction<TrackerDay[]>) {
-      state.days = action.payload;
+      state.days = normalizeTrackerDays(action.payload);
     },
-    toggleDayField(
+    updateDayField(
       state,
-      action: PayloadAction<{ dayNumber: number; field: TrackerField; value: boolean }>
+      action: PayloadAction<{
+        dayNumber: number;
+        field: TrackerField;
+        value: boolean | FarzSalahState | null | number;
+      }>
     ) {
       const { dayNumber, field, value } = action.payload;
       const day = state.days.find((d) => d.day_number === dayNumber);
       if (day) {
-        day[field] = value;
+        (day as Record<string, unknown>)[field] = value;
       }
     },
     resetTracker() {
@@ -99,7 +123,7 @@ export const {
   setTrackerError,
   setTrackerYear,
   setTrackerDays,
-  toggleDayField,
+  updateDayField,
   resetTracker,
 } = trackerSlice.actions;
 export default trackerSlice.reducer;

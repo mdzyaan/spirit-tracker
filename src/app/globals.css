@@ -161,4 +161,18 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Tracker grid hover: dim overlay per cell state (semantic tokens only) */
+  .tracker-hover-dim-brand {
+    background-color: color-mix(in srgb, var(--semantics-brand-bg-glow-default) 18%, transparent);
+  }
+  .tracker-hover-dim-warning {
+    background-color: color-mix(in srgb, var(--semantics-warning-bg-glow-default) 18%, transparent);
+  }
+  .tracker-hover-dim-error {
+    background-color: color-mix(in srgb, var(--semantics-error-bg-glow-default) 18%, transparent);
+  }
+  .tracker-hover-dim-muted {
+    background-color: color-mix(in srgb, var(--semantics-base-bg-muted-default) 18%, transparent);
+  }
 }

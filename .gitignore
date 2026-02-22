@@ -2,7 +2,7 @@ node_modules
 .next
 
 # Environment (required for security)
-.env
+.env*
 .env*.local
 
 # Next.js / deployment

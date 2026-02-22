@@ -1,10 +1,10 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toggleDayField } from "@/store/slices/trackerSlice";
-import { toggleTrackerField } from "@/store/thunks/trackerThunks";
-import { cn } from "@/lib/utils";
+import { updateDayField } from "@/store/slices/trackerSlice";
+import { updateTrackerField } from "@/store/thunks/trackerThunks";
+import { getQuranCharityCellContainerClassName } from "./cellStyles";
+import { Check } from "lucide-react";
 import type { TrackerDay, TrackerField } from "@/store/slices/trackerSlice";
 
 type Props = {
@@ -15,22 +15,20 @@ type Props = {
 export function TrackerCell({ day, field }: Props) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((s) => s.auth.session?.user?.id ?? s.auth.user?.id ?? "");
-  const isChecked = day[field];
+  const value = day[field] as boolean;
 
   const handleToggle = () => {
-    const next = !isChecked;
-    // Optimistic update
-    dispatch(toggleDayField({ dayNumber: day.day_number, field, value: next }));
-    // Persist — rollback on failure
+    const next = !value;
+    dispatch(updateDayField({ dayNumber: day.day_number, field, value: next }));
     dispatch(
-      toggleTrackerField({
+      updateTrackerField({
         userId,
         year: day.year,
         dayNumber: day.day_number,
         date: day.date,
         field,
         value: next,
-        previous: isChecked,
+        previousValue: value,
       })
     ).catch(() => {});
   };
@@ -46,12 +44,9 @@ export function TrackerCell({ day, field }: Props) {
           handleToggle();
         }
       }}
-      className={cn(
-        "w-full min-h-[48px] h-full p-2 flex items-center justify-center bg-card cursor-pointer select-none border-b border-border last:border-b-0",
-        isChecked && "bg-primary/10"
-      )}
+      className={getQuranCharityCellContainerClassName(value)}
     >
-      <Checkbox checked={isChecked} onCheckedChange={handleToggle} className="pointer-events-none" />
+      {value && <Check className="h-5 w-5 text-semantics-brand-fg-link shrink-0" />}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrackerCell } from "./TrackerCell";
 import { PrayerTrackerCell } from "./PrayerTrackerCell";
+import { TaraweehTrackerCell } from "./TaraweehTrackerCell";
 import {
   getStickyPinningStyles,
   getStickyHeaderStyles,
@@ -26,11 +27,12 @@ import {
   TABLE_WIDTH,
   PINNED_SHADOW,
 } from "./trackerTableUtils";
+import { getHoverDimClass } from "./cellStyles";
 import { cn } from "@/lib/utils";
 
 const columnHelper = createColumnHelper<TrackerDay>();
 
-const PRAYER_FIELDS = ["fajr", "dhuhr", "asr", "maghrib", "isha", "taraweeh"] as const;
+const FARZ_FIELDS = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 
 function buildColumns() {
   return [
@@ -60,7 +62,7 @@ function buildColumns() {
       cell: ({ row }) => <TrackerCell day={row.original} field="charity" />,
       size: 80,
     }),
-    ...PRAYER_FIELDS.map((field) =>
+    ...FARZ_FIELDS.map((field) =>
       columnHelper.display({
         id: field,
         header: field.charAt(0).toUpperCase() + field.slice(1),
@@ -68,6 +70,12 @@ function buildColumns() {
         size: 80,
       })
     ),
+    columnHelper.display({
+      id: "taraweeh",
+      header: "Taraweeh",
+      cell: ({ row }) => <TaraweehTrackerCell day={row.original} />,
+      size: 80,
+    }),
   ];
 }
 
@@ -85,12 +93,12 @@ const PLACEHOLDER_DAYS: TrackerDay[] = Array.from(
     date: "2000-01-01",
     quran: false,
     charity: false,
-    fajr: false,
-    dhuhr: false,
-    asr: false,
-    maghrib: false,
-    isha: false,
-    taraweeh: false,
+    fajr: null,
+    dhuhr: null,
+    asr: null,
+    maghrib: null,
+    isha: null,
+    taraweeh: null,
   })
 );
 
@@ -127,6 +135,10 @@ export function TrackerGrid() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [hoveredCell, setHoveredCell] = useState<{
+    rowId: string;
+    columnId: string;
+  } | null>(null);
   const handleScroll = useCallback(() => {
     setScrollLeft(scrollRef.current?.scrollLeft ?? 0);
   }, []);
@@ -187,12 +199,15 @@ export function TrackerGrid() {
                   const isLastLeftPinned =
                     column.getIsPinned() === "left" &&
                     column.getIsLastColumn("left");
+                  const isHeaderColumnHovered =
+                    !isSkeletonTable &&
+                    hoveredCell?.columnId === column.id;
                   return (
                     <th
                       key={header.id}
                       className={cn(
-                        "h-8 border-b border-r border-border bg-primary font-medium text-muted-foreground",
-                        "px-2 py-0 text-center align-middle  last:border-r-0"
+                        "h-8 font-medium text-muted-foreground relative",
+                        "px-2 py-0 text-center align-middle"
                       )}
                       style={{
                         ...getStickyHeaderStyles(column),
@@ -201,7 +216,13 @@ export function TrackerGrid() {
                           : {}),
                       }}
                     >
-                      <span className="block truncate text-xs">
+                      {isHeaderColumnHovered && (
+                        <div
+                          className="absolute inset-0 pointer-events-none tracker-hover-dim-muted"
+                          aria-hidden
+                        />
+                      )}
+                      <span className="relative block truncate text-xs">
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </span>
                     </th>
@@ -220,11 +241,16 @@ export function TrackerGrid() {
                     column.getIsPinned() === "left" &&
                     column.getIsLastColumn("left");
                   const isLast = cellIndex === row.getVisibleCells().length - 1;
+                  const isInHoveredRowOrColumn =
+                    !isSkeletonTable &&
+                    hoveredCell &&
+                    (hoveredCell.rowId === row.id ||
+                      hoveredCell.columnId === column.id);
                   return (
                     <td
                       key={cell.id}
                       className={cn(
-                        "p-0  border-r border-border align-middle",
+                        "p-0 align-middle relative",
                         isLast && "border-r-0"
                       )}
                       style={{
@@ -233,10 +259,31 @@ export function TrackerGrid() {
                           ? { boxShadow: PINNED_SHADOW }
                           : {}),
                       }}
+                      onMouseEnter={
+                        !isSkeletonTable
+                          ? () =>
+                              setHoveredCell({
+                                rowId: row.id,
+                                columnId: column.id,
+                              })
+                          : undefined
+                      }
+                      onMouseLeave={
+                        !isSkeletonTable ? () => setHoveredCell(null) : undefined
+                      }
                     >
+                      {isInHoveredRowOrColumn && (
+                        <div
+                          className={cn(
+                            "absolute inset-0 pointer-events-none",
+                            getHoverDimClass(column.id, row.original)
+                          )}
+                          aria-hidden
+                        />
+                      )}
                       <div
                         className={cn(
-                          "h-[48px] flex items-center justify-center w-full",
+                          "relative h-[48px] flex items-center justify-center w-full",
                           !isPinned && "min-w-[80px]"
                         )}
                       >
