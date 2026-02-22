@@ -114,12 +114,14 @@ export interface Database {
           date: string;
           quran: boolean;
           charity: boolean;
+          fasting: boolean;
           fajr: string | null;
           dhuhr: string | null;
           asr: string | null;
           maghrib: string | null;
           isha: string | null;
           taraweeh: number | null;
+          tahajud: number | null;
           updated_at: string;
         };
         Insert: {
@@ -130,12 +132,14 @@ export interface Database {
           date: string;
           quran?: boolean;
           charity?: boolean;
+          fasting?: boolean;
           fajr?: string | null;
           dhuhr?: string | null;
           asr?: string | null;
           maghrib?: string | null;
           isha?: string | null;
           taraweeh?: number | null;
+          tahajud?: number | null;
           updated_at?: string;
         };
         Update: {
@@ -146,12 +150,14 @@ export interface Database {
           date?: string;
           quran?: boolean;
           charity?: boolean;
+          fasting?: boolean;
           fajr?: string | null;
           dhuhr?: string | null;
           asr?: string | null;
           maghrib?: string | null;
           isha?: string | null;
           taraweeh?: number | null;
+          tahajud?: number | null;
           updated_at?: string;
         };
       };

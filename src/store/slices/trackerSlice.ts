@@ -4,22 +4,26 @@ import type { FarzSalahState } from "@/types/tracker";
 export type TrackerField =
   | "quran"
   | "charity"
+  | "fasting"
   | "fajr"
   | "dhuhr"
   | "asr"
   | "maghrib"
   | "isha"
-  | "taraweeh";
+  | "taraweeh"
+  | "tahajud";
 
 export const TRACKER_FIELDS: TrackerField[] = [
   "quran",
   "charity",
+  "fasting",
   "fajr",
   "dhuhr",
   "asr",
   "maghrib",
   "isha",
   "taraweeh",
+  "tahajud",
 ];
 
 export const PRAYER_FIELDS: TrackerField[] = [
@@ -29,6 +33,7 @@ export const PRAYER_FIELDS: TrackerField[] = [
   "maghrib",
   "isha",
   "taraweeh",
+  "tahajud",
 ];
 
 export type TrackerDay = {
@@ -39,12 +44,14 @@ export type TrackerDay = {
   date: string;
   quran: boolean;
   charity: boolean;
+  fasting: boolean;
   fajr: FarzSalahState | null;
   dhuhr: FarzSalahState | null;
   asr: FarzSalahState | null;
   maghrib: FarzSalahState | null;
   isha: FarzSalahState | null;
   taraweeh: number | null;
+  tahajud: number | null;
 };
 
 export type TrackerStatus = "idle" | "loading" | "succeeded" | "failed";
@@ -78,6 +85,8 @@ function normalizeTrackerDays(days: TrackerDay[]): TrackerDay[] {
     if (typeof t === "boolean") {
       (day as Record<string, unknown>).taraweeh = t ? 20 : 0;
     }
+    (day as Record<string, unknown>).fasting = (d as Record<string, unknown>).fasting ?? false;
+    (day as Record<string, unknown>).tahajud = (d as Record<string, unknown>).tahajud ?? null;
     return day;
   });
 }

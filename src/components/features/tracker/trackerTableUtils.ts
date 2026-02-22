@@ -31,8 +31,8 @@ export function getStickyHeaderStyles<T>(column: Column<T, unknown>): CSSPropert
   };
 }
 
-/** Fixed column widths for layout (Date, Day, then 8 activity columns). */
-export const COLUMN_WIDTHS = [72, 56, 80, 80, 80, 80, 80, 80, 80, 80] as const;
+/** Fixed column widths for layout (Date, Day, then 10 activity columns). */
+export const COLUMN_WIDTHS = [72, 56, 80, 80, 80, 80, 80, 80, 80, 80, 80, 80] as const;
 
 /** Total table width so fixed layout doesn't collapse. */
 export const TABLE_WIDTH =

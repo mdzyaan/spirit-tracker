@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrackerCell } from "./TrackerCell";
 import { PrayerTrackerCell } from "./PrayerTrackerCell";
 import { TaraweehTrackerCell } from "./TaraweehTrackerCell";
+import { TahajudTrackerCell } from "./TahajudTrackerCell";
 import {
   getStickyPinningStyles,
   getStickyHeaderStyles,
@@ -57,6 +58,12 @@ function buildColumns() {
       size: 80,
     }),
     columnHelper.display({
+      id: "fasting",
+      header: "Fasting",
+      cell: ({ row }) => <TrackerCell day={row.original} field="fasting" />,
+      size: 80,
+    }),
+    columnHelper.display({
       id: "charity",
       header: "Charity",
       cell: ({ row }) => <TrackerCell day={row.original} field="charity" />,
@@ -76,6 +83,12 @@ function buildColumns() {
       cell: ({ row }) => <TaraweehTrackerCell day={row.original} />,
       size: 80,
     }),
+    columnHelper.display({
+      id: "tahajud",
+      header: "Tahajud",
+      cell: ({ row }) => <TahajudTrackerCell day={row.original} />,
+      size: 80,
+    }),
   ];
 }
 
@@ -93,12 +106,14 @@ const PLACEHOLDER_DAYS: TrackerDay[] = Array.from(
     date: "2000-01-01",
     quran: false,
     charity: false,
+    fasting: false,
     fajr: null,
     dhuhr: null,
     asr: null,
     maghrib: null,
     isha: null,
     taraweeh: null,
+    tahajud: null,
   })
 );
 

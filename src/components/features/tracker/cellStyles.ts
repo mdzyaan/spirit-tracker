@@ -5,8 +5,8 @@ const FARZ_FIELDS = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 
 /** Dim class for tracker row/column hover overlay (state-aware). */
 export function getHoverDimClass(field: string, day: TrackerDay): string {
-  if (field === "quran" || field === "charity") {
-    return (day[field as "quran" | "charity"] ? "tracker-hover-dim-brand" : "tracker-hover-dim-muted");
+  if (field === "quran" || field === "charity" || field === "fasting") {
+    return (day[field as "quran" | "charity" | "fasting"] ? "tracker-hover-dim-brand" : "tracker-hover-dim-muted");
   }
   if (FARZ_FIELDS.includes(field as (typeof FARZ_FIELDS)[number])) {
     const state = day[field as (typeof FARZ_FIELDS)[number]] as FarzSalahState | null;
@@ -17,6 +17,9 @@ export function getHoverDimClass(field: string, day: TrackerDay): string {
   }
   if (field === "taraweeh") {
     return (day.taraweeh ?? 0) > 0 ? "tracker-hover-dim-brand" : "tracker-hover-dim-muted";
+  }
+  if (field === "tahajud") {
+    return (day.tahajud ?? 0) > 0 ? "tracker-hover-dim-brand" : "tracker-hover-dim-muted";
   }
   return "tracker-hover-dim-muted";
 }
