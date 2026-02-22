@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, BarChart3, Settings } from "lucide-react"
+import { Home, LayoutDashboard, BarChart3, Settings } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -16,7 +16,8 @@ import { useSidebar } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/tracker", label: "Tracker", icon: LayoutDashboard },
   { href: "/stats", label: "Stats", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ]

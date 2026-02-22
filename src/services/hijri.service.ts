@@ -1,84 +1,96 @@
-import { createClient } from "@/lib/supabase/client";
+const ALADHAN_BASE = "https://api.aladhan.com/v1";
 
-const ALADHAN_GTOH = "https://api.aladhan.com/v1/gToH";
-const RAMADAN_HIJRI_MONTH = 9;
-
-export type HijriResult = {
-  date: string;
-  day: string;
-  month: { number: number };
+export type HijriDate = {
+  day: number;
+  monthEn: string;
   year: string;
+  formatted: string;
+  month?: { number: number };
 };
 
-export type GToHResponse = {
+/** Result type for onboarding (check if Ramadan). */
+export type HijriMonthResult = { month: { number: number } } | null;
+
+type HijriApiResponse = {
   code?: number;
-  data?: HijriResult;
+  data?: {
+    hijri?: {
+      day?: string;
+      month?: { en?: string; number?: number };
+      year?: string;
+    };
+  };
 };
 
-/** Format YYYY-MM-DD to DD-MM-YYYY for Aladhan API. */
-function toDdMmYyyy(iso: string): string {
-  const [y, m, d] = iso.split("-");
-  return `${d}-${m}-${y}`;
+async function fetchHijriFromAladhan(ddMmYyyy: string): Promise<HijriApiResponse["data"] | null> {
+  const url = `${ALADHAN_BASE}/gToH?date=${ddMmYyyy}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const json = (await res.json()) as HijriApiResponse;
+    if (json.code !== 200 || !json.data?.hijri) return null;
+    return json.data;
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Fetch Hijri date for a Gregorian date using Aladhan gToH.
- * Uses hijri_calendar_cache: same (year, month, lat, lng, method) returns cached data.
+ * Get Hijri date for a given Gregorian date using Aladhan API.
+ * @param date - Gregorian date (default: today in local timezone)
+ * @returns HijriDate or null on error
  */
 export async function getHijriForDate(
-  dateIso: string,
-  latitude: number,
-  longitude: number,
-  method: number
-): Promise<HijriResult | null> {
-  const [y, m, d] = dateIso.split("-").map(Number);
-  const supabase = createClient();
+  date?: Date
+): Promise<HijriDate | null>;
 
-  const { data: cached } = await supabase
-    .from("hijri_calendar_cache")
-    .select("data")
-    .eq("year", y!)
-    .eq("month", m!)
-    .eq("day", d!)
-    .eq("latitude", latitude)
-    .eq("longitude", longitude)
-    .eq("method", method)
-    .maybeSingle();
+/**
+ * Get Hijri month for a given date (used by onboarding to check if Ramadan).
+ * Lat/lng and calculation_method are accepted for API compatibility but gToH does not use them.
+ */
+export async function getHijriForDate(
+  todayIso: string,
+  _lat: number,
+  _lng: number,
+  _calculation_method: number
+): Promise<HijriMonthResult>;
 
-  if (cached?.data && typeof cached.data === "object" && "date" in (cached.data as object)) {
-    const parsed = cached.data as unknown as HijriResult;
-    if (parsed.month?.number != null) return parsed;
+// Implementation supports both (date?) and (iso, lat, lng, method) for onboarding
+export async function getHijriForDate(
+  dateOrIso: Date | string | undefined,
+  lat?: number,
+  lng?: number,
+  calculation_method?: number
+): Promise<HijriDate | HijriMonthResult | null> {
+  const date = typeof dateOrIso === "undefined" ? new Date() : dateOrIso;
+  void lat;
+  void lng;
+  void calculation_method;
+  let ddMmYyyy: string;
+  if (typeof date === "string") {
+    const [y, m, d] = date.split("-");
+    if (!y || !m || !d) return null;
+    ddMmYyyy = `${d}-${m}-${y}`;
+  } else {
+    const d = date.getDate();
+    const m = date.getMonth() + 1;
+    const y = date.getFullYear();
+    ddMmYyyy = `${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}-${y}`;
   }
 
-  const dateParam = toDdMmYyyy(dateIso);
-  const url = `${ALADHAN_GTOH}?date=${dateParam}&latitude=${latitude}&longitude=${longitude}&method=${method}`;
+  const data = await fetchHijriFromAladhan(ddMmYyyy);
+  if (!data?.hijri) return null;
 
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const json = (await res.json()) as GToHResponse;
-  if (json.code !== 200 || !json.data) return null;
+  const h = data.hijri;
+  const monthNum = h.month?.number ?? 0;
 
-  const data = json.data;
-  await supabase.from("hijri_calendar_cache").insert({
-    year: y!,
-    month: m!,
-    day: d!,
-    latitude,
-    longitude,
-    method,
-    data: data as unknown as Record<string, unknown>,
-  });
+  if (typeof date === "string") {
+    return { month: { number: monthNum } };
+  }
 
-  return data;
-}
-
-/** Returns true if the given date falls in Ramadan (Hijri month 9) for the given location/method. */
-export async function isRamadanDate(
-  dateIso: string,
-  latitude: number,
-  longitude: number,
-  method: number
-): Promise<boolean> {
-  const hijri = await getHijriForDate(dateIso, latitude, longitude, method);
-  return hijri?.month?.number === RAMADAN_HIJRI_MONTH;
+  const day = parseInt(h.day ?? "0", 10);
+  const monthEn = h.month?.en ?? "";
+  const year = h.year ?? "";
+  const formatted = `${day} ${monthEn} ${year} AH`;
+  return { day, monthEn, year, formatted, month: { number: monthNum } };
 }

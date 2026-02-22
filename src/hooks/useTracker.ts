@@ -8,7 +8,7 @@ import { useAuth } from "./useAuth";
 export function useTracker() {
   const { user, session, initialized } = useAuth();
   const dispatch = useAppDispatch();
-  const { days, year, status } = useAppSelector((s) => s.tracker);
+  const { days, year, status, error } = useAppSelector((s) => s.tracker);
 
   const userId = user?.id ?? session?.user?.id;
 
@@ -18,5 +18,5 @@ export function useTracker() {
     dispatch(fetchTrackerData({ userId, year: year ?? undefined }));
   }, [initialized, userId, status, year, dispatch]);
 
-  return { days, year, status };
+  return { days, year, status, error };
 }

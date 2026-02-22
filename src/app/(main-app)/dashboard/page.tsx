@@ -1,14 +1,10 @@
-import { TrackerGrid } from "@/components/features/tracker/TrackerGrid";
-import { DashboardHeader } from "@/components/features/tracker/DashboardHeader";
-import { RamadanSettingsBanner } from "@/components/features/tracker/RamadanSettingsBanner";
+import { HomeDashboard } from "@/components/features/home/HomeDashboard";
 
-export default function DashboardPage() {
+export default function HomePage() {
   return (
-    <div >
-      <DashboardHeader />
-      <RamadanSettingsBanner />
-      <div className="w-full min-w-0">
-        <TrackerGrid />
+    <div className="w-full min-h-full flex justify-center px-4 py-8 md:py-12">
+      <div className="w-full max-w-2xl flex flex-col gap-8 md:gap-10">
+        <HomeDashboard />
       </div>
     </div>
   );

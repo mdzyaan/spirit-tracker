@@ -27,12 +27,6 @@ export default function Header() {
     router.refresh()
   }
 
-  const triggerLabel = displayName
-    ? email
-      ? `${displayName} | ${email}`
-      : displayName
-    : email || "Account"
-
   return (
     <div className="flex items-center p-2  pr-4 md:justify-between justify-normal gap-4 md:gap-0 bg-semantics-base-bg-dim-default">
       <div className="flex items-center gap-2 flex-1">

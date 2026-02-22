@@ -29,6 +29,7 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname === "/login";
   const isOnboardingPage = request.nextUrl.pathname === "/onboarding";
   const isProtected =
+    request.nextUrl.pathname.startsWith("/home") ||
     request.nextUrl.pathname.startsWith("/dashboard") ||
     request.nextUrl.pathname.startsWith("/stats") ||
     request.nextUrl.pathname.startsWith("/settings") ||

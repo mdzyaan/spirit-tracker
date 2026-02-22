@@ -18,7 +18,7 @@ type Props = {
   allowedStates?: FarzSalahState[];
 };
 
-const FARZ_LABELS: Record<FarzSalahState, string> = {
+export const FARZ_LABELS: Record<FarzSalahState, string> = {
   mosque: "Mosque",
   on_time: "On time",
   qaza: "Qaza",
@@ -26,7 +26,7 @@ const FARZ_LABELS: Record<FarzSalahState, string> = {
   not_applicable: "N/A",
 };
 
-function FarzIcon({ state }: { state: FarzSalahState | null }) {
+export function FarzIcon({ state }: { state: FarzSalahState | null }) {
   if (state === "mosque") return <Medal className="h-5 w-5 shrink-0 text-semantics-brand-fg-link" />;
   if (state === "on_time") return <Check className="h-5 w-5 shrink-0 text-semantics-brand-fg-link" />;
   if (state === "qaza") return <Clock className="h-5 w-5 shrink-0 text-semantics-warning-fg-link" />;
