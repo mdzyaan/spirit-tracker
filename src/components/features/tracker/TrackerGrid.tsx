@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useCallback, useEffect, useMemo } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import type { RootState } from "@/store/store";
 import { useAuth } from "@/hooks/useAuth";
@@ -176,15 +176,28 @@ export function TrackerGrid() {
     },
   });
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [hoveredCell, setHoveredCell] = useState<{
     rowId: string;
     columnId: string;
   } | null>(null);
-  const handleScroll = useCallback(() => {
-    setScrollLeft(scrollRef.current?.scrollLeft ?? 0);
+
+  useEffect(() => {
+    let el: HTMLElement | null = outerRef.current?.parentElement ?? null;
+    while (el) {
+      const { overflowX, overflow } = window.getComputedStyle(el);
+      if (overflowX === "auto" || overflowX === "scroll" || overflow === "auto" || overflow === "scroll") {
+        break;
+      }
+      el = el.parentElement;
+    }
+    if (!el) return;
+    const onScroll = () => setScrollLeft(el!.scrollLeft);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el!.removeEventListener("scroll", onScroll);
   }, []);
+
   const showPinnedShadow = scrollLeft > 0;
 
   if (initialized && !userId) {
@@ -211,9 +224,8 @@ export function TrackerGrid() {
 
   return (
     <div
-      ref={scrollRef}
-      onScroll={handleScroll}
-      className="w-full min-w-0 overflow-x-auto rounded-lg "
+      ref={outerRef}
+      className="w-full min-w-0 rounded-lg"
     >
       <div
         className="min-w-full"
@@ -234,7 +246,7 @@ export function TrackerGrid() {
               <col key={i} style={{ width: w, minWidth: w }} />
             ))}
           </colgroup>
-          <thead>
+          <thead style={{ position: "sticky", top: 0, zIndex: 15 }}>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
