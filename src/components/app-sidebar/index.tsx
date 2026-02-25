@@ -42,7 +42,7 @@ export function AppSidebar() {
                   <Image src="/assets/star.png" alt="Ramadan Tracker" width={32} height={32} />
                 ) : (
                   <span className="font-semibold text-sm text-semantics-base-fg-muted-2 flex  gap-2">
-                    <Image src="/star.png" alt="Ramadan Tracker" width={16} height={16} />
+                    <Image src="/assets/star.png" alt="Ramadan Tracker" width={16} height={16} />
                     Ramadan Tracker
                   </span>
                 )}
