@@ -15,7 +15,7 @@ export default function MainAppLayout({
         className="flex-1 !min-h-0 overflow-hidden"
       >
         <AppSidebar />
-        <div className="flex flex-col flex-1 min-w-0 bg-semantics-base-bg-dim-default overflow-hidden">
+        <div className="flex flex-col flex-1 min-w-0 bg-background overflow-hidden">
           <Header />
           <main className="flex-1 overflow-auto bg-background md:rounded-tl-xl no-scrollbar">
             {children}

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --font-plus-jakarta-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-noto-sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
 
     /* Shadcn semantic tokens - monochromatic (grays + accent) */
     --background: var(--semantics-base-bg-default);
@@ -28,48 +28,48 @@
     --border: var(--semantics-base-border-0);
     --input: var(--semantics-base-border-1);
     --ring: var(--semantics-brand-fg-bold);
-    --radius: 0.375rem;
+    --radius: 0.625rem;
 
-    /* Base - monochromatic grays */
+    /* Base - clean white */
     --semantics-base-bg-default: #ffffff;
-    --semantics-base-bg-hover: #f5f5f4;
-    --semantics-base-bg-active: #e7e5e4;
-    --semantics-base-bg-muted-default: #f5f5f4;
-    --semantics-base-bg-muted-hover: #eeedec;
-    --semantics-base-bg-muted-active: #e7e5e4;
-    --semantics-base-bg-secondary-default: #e7e5e4;
-    --semantics-base-bg-secondary-hover: #dfdcdb;
-    --semantics-base-bg-secondary-active: #d6d3d1;
-    --semantics-base-bg-dim-default: #fafaf9;
-    --semantics-base-bg-invert-default: #1c1917;
-    --semantics-base-bg-invert-hover: #0c0a09;
-    --semantics-base-fg-default: #1c1917;
-    --semantics-base-fg-muted: #57534e;
-    --semantics-base-fg-muted-2: #78716c;
-    --semantics-base-fg-muted-3: #a8a29e;
-    --semantics-base-fg-invert: #fafaf9;
-    --semantics-base-border-0: #f5f5f4;
-    --semantics-base-border-1: #e7e5e4;
-    --semantics-base-border-2: #d6d3d1;
-    --semantics-base-border-3: #a8a29e;
-    --semantics-base-shadow: #1c191719;
+    --semantics-base-bg-hover: #f5f5f5;
+    --semantics-base-bg-active: #e5e5e5;
+    --semantics-base-bg-muted-default: #f5f5f5;
+    --semantics-base-bg-muted-hover: #ededed;
+    --semantics-base-bg-muted-active: #e5e5e5;
+    --semantics-base-bg-secondary-default: #e5e5e5;
+    --semantics-base-bg-secondary-hover: #dedede;
+    --semantics-base-bg-secondary-active: #d4d4d4;
+    --semantics-base-bg-dim-default: #f5f5f5;
+    --semantics-base-bg-invert-default: #171717;
+    --semantics-base-bg-invert-hover: #0a0a0a;
+    --semantics-base-fg-default: #171717;
+    --semantics-base-fg-muted: #525252;
+    --semantics-base-fg-muted-2: #737373;
+    --semantics-base-fg-muted-3: #a3a3a3;
+    --semantics-base-fg-invert: #fafafa;
+    --semantics-base-border-0: #f0f0f0;
+    --semantics-base-border-1: #e5e5e5;
+    --semantics-base-border-2: #d4d4d4;
+    --semantics-base-border-3: #a3a3a3;
+    --semantics-base-shadow: #17171719;
 
-    /* Brand accent - calm teal */
-    --semantics-brand-bg-default: #0d9488;
-    --semantics-brand-bg-hover: #0f766e;
-    --semantics-brand-bg-active: #115e59;
-    --semantics-brand-bg-soft-default: #ccfbf126;
-    --semantics-brand-bg-soft-hover: #ccfbf133;
-    --semantics-brand-bg-soft-active: #ccfbf140;
-    --semantics-brand-bg-glow-default: #f0fdfa;
-    --semantics-brand-bg-glow-hover: #e2f8f3;
-    --semantics-brand-bg-glow-active: #d1f5ed;
-    --semantics-brand-fg-link: #0d9488;
-    --semantics-brand-fg-bold: #134e4a;
-    --semantics-brand-fg-soft: #ccfbf1;
-    --semantics-brand-border-1: #b8eae4;
-    --semantics-brand-border-2: #7ed8ce;
-    --semantics-brand-border-3: #43c6b8;
+    /* Brand accent - #00a363 */
+    --semantics-brand-bg-default: #00a363;
+    --semantics-brand-bg-hover: #008f57;
+    --semantics-brand-bg-active: #007a4b;
+    --semantics-brand-bg-soft-default: #00a36326;
+    --semantics-brand-bg-soft-hover: #00a36333;
+    --semantics-brand-bg-soft-active: #00a36340;
+    --semantics-brand-bg-glow-default: #ecfdf5;
+    --semantics-brand-bg-glow-hover: #d1fae5;
+    --semantics-brand-bg-glow-active: #a7f3d0;
+    --semantics-brand-fg-link: #00a363;
+    --semantics-brand-fg-bold: #065f46;
+    --semantics-brand-fg-soft: #a7f3d0;
+    --semantics-brand-border-1: #a7f3d0;
+    --semantics-brand-border-2: #6ee7b7;
+    --semantics-brand-border-3: #34d399;
 
     /* Error */
     --semantics-error-bg-default: #dc2626;
@@ -107,33 +107,33 @@
 
     /* Base fg invert (for buttons) */
     --semantics-base-fg-invert-white: #ffffff;
-    --semantics-base-fg-invert-black: #1c1917;
+    --semantics-base-fg-invert-black: #171717;
   }
 
   .dark {
-    --semantics-base-bg-default: #1c1917;
-    --semantics-base-bg-hover: #292524;
-    --semantics-base-bg-active: #44403c;
-    --semantics-base-bg-muted-default: #292524;
-    --semantics-base-bg-muted-hover: #44403c;
-    --semantics-base-bg-secondary-default: #44403c;
-    --semantics-base-bg-dim-default: #292524;
-    --semantics-base-bg-invert-default: #fafaf9;
-    --semantics-base-bg-invert-hover: #f5f5f4;
-    --semantics-base-fg-default: #fafaf9;
-    --semantics-base-fg-muted: #a8a29e;
-    --semantics-base-fg-muted-2: #78716c;
-    --semantics-base-fg-muted-3: #57534e;
-    --semantics-base-fg-invert: #1c1917;
+    --semantics-base-bg-default: #171717;
+    --semantics-base-bg-hover: #212121;
+    --semantics-base-bg-active: #2a2a2a;
+    --semantics-base-bg-muted-default: #212121;
+    --semantics-base-bg-muted-hover: #2a2a2a;
+    --semantics-base-bg-secondary-default: #2a2a2a;
+    --semantics-base-bg-dim-default: #111111;
+    --semantics-base-bg-invert-default: #fafafa;
+    --semantics-base-bg-invert-hover: #f5f5f5;
+    --semantics-base-fg-default: #fafafa;
+    --semantics-base-fg-muted: #a3a3a3;
+    --semantics-base-fg-muted-2: #737373;
+    --semantics-base-fg-muted-3: #525252;
+    --semantics-base-fg-invert: #171717;
     --semantics-base-fg-invert-white: #ffffff;
-    --semantics-base-fg-invert-black: #1c1917;
-    --semantics-base-border-0: #44403c;
-    --semantics-base-border-1: #57534e;
-    --semantics-base-border-2: #78716c;
-    --semantics-base-border-3: #a8a29e;
-    --semantics-brand-bg-glow-default: #042f2e;
-    --semantics-brand-bg-glow-hover: #0e3938;
-    --semantics-brand-bg-glow-active: #104c4a;
+    --semantics-base-fg-invert-black: #171717;
+    --semantics-base-border-0: #272727;
+    --semantics-base-border-1: #3d3d3d;
+    --semantics-base-border-2: #525252;
+    --semantics-base-border-3: #737373;
+    --semantics-brand-bg-glow-default: #022c1e;
+    --semantics-brand-bg-glow-hover: #053d29;
+    --semantics-brand-bg-glow-active: #074f35;
     --semantics-error-bg-glow-default: #450a0a;
     --semantics-error-bg-glow-hover: #7f1d1d;
     --semantics-error-bg-glow-active: #991b1b;
@@ -147,7 +147,7 @@
   }
 
   body {
-    font-family: var(--font-plus-jakarta-sans);
+    font-family: var(--font-noto-sans);
     background-color: var(--semantics-base-bg-dim-default);
     color: var(--semantics-base-fg-default);
   }
@@ -173,6 +173,6 @@
     background-color: color-mix(in srgb, var(--semantics-error-bg-glow-default) 18%, transparent);
   }
   .tracker-hover-dim-muted {
-    background-color: color-mix(in srgb, var(--semantics-base-bg-muted-default) 18%, transparent);
+    background-color: color-mix(in srgb, var(--semantics-base-bg-muted-default) 50%, transparent);
   }
 }

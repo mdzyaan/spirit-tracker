@@ -35,11 +35,11 @@ export default function HomePage() {
       <div className="min-h-screen bg-background">
         {/* Soft brand glow behind hero */}
         <div
-          className="pointer-events-none fixed inset-0 z-0 opacity-40"
-          style={{
-            background:
-              "radial-gradient(ellipse 80% 50% at 50% -20%, var(--semantics-brand-bg-soft-default), transparent)",
-          }}
+          className="pointer-events-none fixed inset-0 z-0 opacity-40 bg-background"
+          // style={{
+          //   background:
+          //     "radial-gradient(ellipse 80% 50% at 50% -20%, var(--semantics-brand-bg-soft-default), transparent)",
+          // }}
         />
         <header className="relative z-10 flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur-sm sm:px-6">
           <div className="flex items-center gap-2">

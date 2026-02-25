@@ -278,7 +278,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonPropsWithCompat>(
       size: sizeProp,
       isLoading = false,
       width = "fit",
-      shape = "default",
+      shape = "pill",
       noWrap = true,
       linkPadding = false,
       iconLeft,

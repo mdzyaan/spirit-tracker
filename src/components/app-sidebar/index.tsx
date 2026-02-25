@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, LayoutDashboard, BarChart3, Settings } from "lucide-react"
@@ -37,9 +38,14 @@ export function AppSidebar() {
                 className="flex items-center justify-center rounded-lg text-semantics-base-fg-default hover:opacity-80 transition-opacity"
                 aria-label="Ramadan Tracker"
               >
-                <span className="font-semibold text-sm text-semantics-base-fg-default">
-                  {(state !== "collapsed" || isMobile) ? "Ramadan Tracker" : "RT"}
-                </span>
+                {state === "collapsed" && !isMobile ? (
+                  <Image src="/star.png" alt="Ramadan Tracker" width={32} height={32} />
+                ) : (
+                  <span className="font-semibold text-sm text-semantics-base-fg-muted-2 flex  gap-2">
+                    <Image src="/star.png" alt="Ramadan Tracker" width={16} height={16} />
+                    Ramadan Tracker
+                  </span>
+                )}
               </Link>
             </div>
           </SidebarMenuItem>
