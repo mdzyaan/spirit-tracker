@@ -29,12 +29,15 @@ import {
   PINNED_SHADOW,
 } from "./trackerTableUtils";
 import { getHoverDimClass } from "./cellStyles";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getUserSettings } from "@/services/user-settings.service";
 import { getFarzStatesForGender } from "@/types/tracker";
 import type { FarzSalahState } from "@/types/tracker";
 
 const columnHelper = createColumnHelper<TrackerDay>();
+
+const TODAY = format(new Date(), "yyyy-MM-dd");
 
 const FARZ_FIELDS = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 
@@ -287,7 +290,9 @@ export function TrackerGrid() {
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => (
+            {table.getRowModel().rows.map((row) => {
+              const isToday = !isSkeletonTable && row.original.date === TODAY;
+              return (
               <tr key={row.id}>
                 {row.getVisibleCells().map((cell, cellIndex) => {
                   const { column } = cell;
@@ -310,6 +315,9 @@ export function TrackerGrid() {
                       )}
                       style={{
                         ...getStickyPinningStyles(column),
+                        ...(isToday
+                          ? { backgroundColor: "var(--accent)" }
+                          : {}),
                         ...(isLastLeftPinned && showPinnedShadow
                           ? { boxShadow: PINNED_SHADOW }
                           : {}),
@@ -352,7 +360,8 @@ export function TrackerGrid() {
                   );
                 })}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
