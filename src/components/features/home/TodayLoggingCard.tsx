@@ -118,18 +118,15 @@ function getPrayerVariant(state: FarzSalahState | null): CardVariant {
 
 function countCompleted(day: TrackerDay): number {
   return [
-    day.quran,
-    day.fasting,
-    day.charity,
     day.fajr !== null,
     day.dhuhr !== null,
     day.asr !== null,
     day.maghrib !== null,
     day.isha !== null,
-    (day.taraweeh ?? 0) > 0,
-    (day.tahajud ?? 0) > 0,
   ].filter(Boolean).length;
 }
+
+const FARZ_TOTAL = 5;
 
 const PRAYER_ICONS: Record<(typeof FARZ_FIELDS_ORDERED)[number], React.ReactNode> = {
   fajr: <Sunrise className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />,
@@ -654,7 +651,7 @@ export function TodayLoggingCard({
 
   const day = todayDay;
   const completed = countCompleted(day);
-  const total = 10;
+  const total = FARZ_TOTAL;
 
   return (
     <div className="border-semantics-base-border-1 bg-card overflow-hidden">

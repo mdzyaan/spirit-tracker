@@ -1,8 +1,8 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
-import { getHijriForDate } from "@/services/hijri.service";
+import { useEffect, useState, useMemo } from "react";
+import { useAppSelector } from "@/store/hooks";
 import { getUserSettings } from "@/services/user-settings.service";
 import {
   getPrayerTimings,
@@ -18,9 +18,6 @@ export function GreetingHeader() {
   const { user } = useAuth();
   const userId = user?.id;
 
-  const [hijri, setHijri] = useState<string | null>(null);
-  const [hijriLoading, setHijriLoading] = useState(true);
-
   const [nextPrayer, setNextPrayer] = useState<NextPrayer | null>(null);
   const [secondsUntil, setSecondsUntil] = useState<number>(0);
   const [prayerLoading, setPrayerLoading] = useState(true);
@@ -28,22 +25,16 @@ export function GreetingHeader() {
   const displayName = user?.name?.trim() || "there";
   const englishDate = format(new Date(), "EEEE, d MMMM yyyy");
 
-  // Fetch Hijri date
-  useEffect(() => {
-    let cancelled = false;
-    setHijriLoading(true);
-    getHijriForDate(new Date())
-      .then((result) => {
-        if (!cancelled) setHijri(result?.formatted ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setHijri(null);
-      })
-      .finally(() => {
-        if (!cancelled) setHijriLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, []);
+  // Get today's Ramadan day number from the tracker store (same source as TodayLoggingCard)
+  const days = useAppSelector((s) => s.tracker.days);
+  const trackerStatus = useAppSelector((s) => s.tracker.status);
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+  const todayDayNumber = useMemo(
+    () => days.find((d) => d.date === todayStr)?.day_number ?? null,
+    [days, todayStr]
+  );
+  const ramadanLabel = todayDayNumber !== null ? `Ramadan · Day ${todayDayNumber}` : null;
+  const ramadanLoading = trackerStatus === "idle" || trackerStatus === "loading";
 
   // Fetch prayer times and initialise next prayer
   useEffect(() => {
@@ -88,7 +79,7 @@ export function GreetingHeader() {
     <div className="rounded-2xl border border-semantics-base-border-1 bg-card px-6 py-6 flex gap-4 overflow-hidden">
       {/* ── Left: greeting + dates ── */}
       <div className="flex flex-col justify-center gap-1 flex-1 min-w-0">
-        <p className="text-xs font-medium uppercase tracking-widest text-semantics-base-fg-muted">
+        <p className="text-sm font-medium uppercase tracking-widest text-semantics-base-fg-muted">
           Assalamualaikum
         </p>
         <h1 className="text-2xl font-bold text-foreground tracking-tight truncate">
@@ -99,10 +90,10 @@ export function GreetingHeader() {
           <p className="text-sm font-medium text-foreground">
             {englishDate}
           </p>
-          {hijriLoading ? (
-            <Skeleton className="h-4 w-44 rounded" />
-          ) : hijri ? (
-            <p className="text-xs text-semantics-base-fg-muted">{hijri}</p>
+          {ramadanLoading ? (
+            <Skeleton className="h-4 w-36 rounded" />
+          ) : ramadanLabel ? (
+            <p className="text-xs text-semantics-base-fg-muted">{ramadanLabel}</p>
           ) : null}
         </div>
       </div>
