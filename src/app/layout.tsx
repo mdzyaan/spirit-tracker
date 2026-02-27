@@ -3,6 +3,7 @@ import "./globals.css";
 import { ReduxProvider } from "@/store/provider";
 import { AuthListener } from "@/components/features/auth/AuthListener";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "Ramadan Tracker",
@@ -21,6 +22,7 @@ export default function RootLayout({
           <ThemeProvider>
             <AuthListener />
             {children}
+            <SpeedInsights />
           </ThemeProvider>
         </ReduxProvider>
       </body>
