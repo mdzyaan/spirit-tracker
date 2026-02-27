@@ -99,7 +99,7 @@ export function SettingsForm() {
 
   return (
     <div className="flex flex-col gap-6 max-w-md">
-      <Card className="border-border">
+      {/* <Card className="border-border">
         <CardHeader>
           <CardTitle>Appearance</CardTitle>
           <CardDescription>Switch between light and dark theme.</CardDescription>
@@ -120,7 +120,7 @@ export function SettingsForm() {
             Dark
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
 
       <Card className="border-border">
         <CardHeader>
