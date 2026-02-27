@@ -100,7 +100,7 @@ export function AyahCard() {
   if (!data) return null;
 
   return (
-    <Card className="border-semantics-base-border-1 bg-gradient-to-br from-semantics-base-bg-muted-default to-semantics-brand-bg-soft-default overflow-hidden shadow-sm transition-shadow">
+    <Card >
       <CardContent className="p-6 md:p-8">
         <div className="flex items-start justify-between gap-3">
           <p className="text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">

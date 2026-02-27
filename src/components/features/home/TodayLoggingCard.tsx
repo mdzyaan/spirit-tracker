@@ -10,23 +10,51 @@ import { updateDayField } from "@/store/slices/trackerSlice";
 import { updateTrackerField } from "@/store/thunks/trackerThunks";
 import type { TrackerDay } from "@/store/slices/trackerSlice";
 import type { FarzSalahState } from "@/types/tracker";
-import { getFarzStatesForGender, isFarzCompleted } from "@/types/tracker";
-import { FARZ_SALAH_STATES } from "@/types/tracker";
-import { TrackerCell } from "@/components/features/tracker/TrackerCell";
+import { getFarzStatesForGender, FARZ_SALAH_STATES } from "@/types/tracker";
 import { FarzIcon, FARZ_LABELS } from "@/components/features/tracker/PrayerTrackerCell";
-import { TaraweehTrackerCell } from "@/components/features/tracker/TaraweehTrackerCell";
-import { TahajudTrackerCell } from "@/components/features/tracker/TahajudTrackerCell";
-import { getFarzCellClasses } from "@/components/features/tracker/cellStyles";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Sun, Landmark, Moon, BookOpen, Heart, Minus } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Sun,
+  Moon,
+  BookOpen,
+  Heart,
+  Minus,
+  Sunrise,
+  Sunset,
+  CloudSun,
+  Star,
+} from "lucide-react";
 import { getUserSettings } from "@/services/user-settings.service";
+import {
+  getPrayerTimings,
+  formatPrayerTime,
+} from "@/services/prayer-times.service";
+import type { PrayerTimings } from "@/services/prayer-times.service";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
-const FARZ_FIELDS = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
-const FARZ_LABELS_MAP: Record<(typeof FARZ_FIELDS)[number], string> = {
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FARZ_FIELDS_ORDERED = [
+  "fajr",
+  "dhuhr",
+  "asr",
+  "maghrib",
+  "isha",
+] as const;
+
+const TARAWEEH_OPTIONS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20] as const;
+const TAHAJUD_OPTIONS = [0, 2, 4, 6, 8] as const;
+
+const PRAYER_LABEL: Record<(typeof FARZ_FIELDS_ORDERED)[number], string> = {
   fajr: "Fajr",
   dhuhr: "Dhuhr",
   asr: "Asr",
@@ -34,77 +62,284 @@ const FARZ_LABELS_MAP: Record<(typeof FARZ_FIELDS)[number], string> = {
   isha: "Isha",
 };
 
-function DonePill({
-  done,
-  label,
-  doneLabel,
-}: {
-  done: boolean;
-  label?: string;
-  /** When done and set, show this instead of "DONE" (e.g. "8 Rakat") */
-  doneLabel?: string;
-}) {
-  if (done) {
-    const text = doneLabel ?? "DONE";
-    return (
-      <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-semantics-brand-bg-glow text-semantics-brand-fg-bold">
-        {text}
-      </span>
-    );
-  }
-  if (label) {
-    return (
-      <span className="text-xs text-semantics-base-fg-muted">{label}</span>
-    );
-  }
-  return null;
+const FARZ_TO_TIMING_KEY: Record<
+  (typeof FARZ_FIELDS_ORDERED)[number],
+  keyof PrayerTimings
+> = {
+  fajr: "Fajr",
+  dhuhr: "Dhuhr",
+  asr: "Asr",
+  maghrib: "Maghrib",
+  isha: "Isha",
+};
+
+// ─── Hooks ────────────────────────────────────────────────────────────────────
+
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
 }
 
-function LoggingRow({
-  label,
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+type CardVariant = "base" | "brand" | "warning" | "error" | "na";
+
+function getCardClasses(variant: CardVariant): string {
+  const base =
+    "rounded-xl border transition-all duration-300 active:scale-[0.98] cursor-pointer select-none";
+  switch (variant) {
+    case "brand":
+      return cn(base, "border-semantics-brand-border-2 bg-semantics-brand-bg-glow");
+    case "warning":
+      return cn(base, "border-semantics-warning-border-2 bg-semantics-warning-bg-glow");
+    case "error":
+      return cn(base, "border-semantics-error-border-2 bg-semantics-error-bg-glow");
+    case "na":
+      return cn(base, "border-semantics-base-border-1 bg-semantics-base-bg-muted opacity-60");
+    default:
+      return cn(base, "border-semantics-base-border-1 bg-card");
+  }
+}
+
+function getPrayerVariant(state: FarzSalahState | null): CardVariant {
+  if (state === "mosque" || state === "on_time") return "brand";
+  if (state === "qaza") return "warning";
+  if (state === "missed") return "error";
+  if (state === "not_applicable") return "na";
+  return "base";
+}
+
+function countCompleted(day: TrackerDay): number {
+  return [
+    day.quran,
+    day.fasting,
+    day.charity,
+    day.fajr !== null,
+    day.dhuhr !== null,
+    day.asr !== null,
+    day.maghrib !== null,
+    day.isha !== null,
+    (day.taraweeh ?? 0) > 0,
+    (day.tahajud ?? 0) > 0,
+  ].filter(Boolean).length;
+}
+
+const PRAYER_ICONS: Record<(typeof FARZ_FIELDS_ORDERED)[number], React.ReactNode> = {
+  fajr: <Sunrise className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />,
+  dhuhr: <Sun className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />,
+  asr: <CloudSun className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />,
+  maghrib: <Sunset className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />,
+  isha: <Moon className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />,
+};
+
+const PRAYER_STATE_LABEL: Record<FarzSalahState, string> = {
+  mosque: "Mosque",
+  on_time: "On time",
+  qaza: "Qaza",
+  missed: "Missed",
+  not_applicable: "N/A",
+};
+
+// ─── Shared sub-components ────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs font-semibold uppercase tracking-widest text-semantics-base-fg-muted-2 px-1 pb-0.5">
+      {children}
+    </p>
+  );
+}
+
+function StateBadge({
+  variant,
   children,
-  done,
-  doneLabel,
-  labelWhenDone,
 }: {
-  label: string;
+  variant: CardVariant;
   children: React.ReactNode;
-  done: boolean;
-  doneLabel?: string;
-  /** When done, show this as the pill text instead of "DONE" (e.g. "8 Rakat") */
-  labelWhenDone?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-semantics-base-bg-muted-default px-3 py-2 min-h-[48px] transition-colors duration-150">
-      <div className="shrink-0 w-12 h-10 flex items-center justify-center rounded-md overflow-hidden">
-        {children}
-      </div>
-      <span className="flex-1 text-sm font-medium text-foreground">{label}</span>
-      <DonePill done={done} label={doneLabel} doneLabel={labelWhenDone} />
+    <span
+      className={cn(
+        "rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0",
+        variant === "brand" &&
+          "bg-semantics-brand-bg-soft text-semantics-brand-fg-bold",
+        variant === "warning" &&
+          "bg-semantics-warning-bg-soft text-semantics-warning-fg-bold",
+        variant === "error" &&
+          "bg-semantics-error-bg-soft text-semantics-error-fg-bold",
+        (variant === "na" || variant === "base") &&
+          "bg-semantics-base-bg-secondary text-semantics-base-fg-muted"
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function PrayerOptionsList({
+  options,
+  currentState,
+  onSelect,
+}: {
+  options: FarzSalahState[];
+  currentState: FarzSalahState | null;
+  onSelect: (s: FarzSalahState | null) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5 p-2">
+      {options.map((s) => (
+        <button
+          key={s}
+          type="button"
+          onClick={() => onSelect(s)}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm w-full text-left transition-colors",
+            currentState === s
+              ? "bg-semantics-brand-bg-glow text-semantics-brand-fg-bold font-medium"
+              : "hover:bg-semantics-base-bg-hover"
+          )}
+        >
+          <FarzIcon state={s} /> 
+          <span>{FARZ_LABELS[s]}</span>
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => onSelect(null)}
+        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm w-full text-left text-semantics-base-fg-muted hover:bg-semantics-base-bg-hover transition-colors"
+      >
+        <Minus className="h-5 w-5 shrink-0" />
+        <span>Clear</span>
+      </button>
     </div>
   );
 }
 
-/** Prayer row: label left, state badge right, click opens bottom popover with same options as PrayerTrackerCell. */
-function PrayerLoggingRow({
+function RakatGrid({
+  options,
+  currentValue,
+  onSelect,
+}: {
+  options: readonly number[];
+  currentValue: number;
+  onSelect: (n: number) => void;
+}) {
+  return (
+    <div className="grid grid-cols-5 gap-2 p-4">
+      {options.map((n) => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onSelect(n)}
+          className={cn(
+            "rounded-lg py-2.5 text-sm font-medium transition-colors",
+            n === 0
+              ? "text-semantics-base-fg-muted hover:bg-semantics-base-bg-hover"
+              : cn(
+                  "hover:bg-semantics-brand-bg-glow",
+                  currentValue === n &&
+                    "bg-semantics-brand-bg-soft text-semantics-brand-fg-bold"
+                )
+          )}
+        >
+          {n === 0 ? "—" : n}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Inline expand (desktop) wrapper
+function InlineExpand({
+  open,
+  children,
+}: {
+  open: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "overflow-hidden transition-all duration-300",
+        open ? "max-h-[400px] mt-1" : "max-h-0"
+      )}
+    >
+      <div className="rounded-xl border border-semantics-base-border-1 bg-card shadow-sm">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── Boolean card (Fasting / Quran / Charity) ─────────────────────────────────
+
+function BooleanCard({
+  icon,
+  label,
+  value,
+  onToggle,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
+      className={cn(
+        getCardClasses(value ? "brand" : "base"),
+        "flex items-center gap-3 px-4 py-3"
+      )}
+    >
+      {icon}
+      <span className="flex-1 text-sm font-medium">{label}</span>
+      {value && <StateBadge variant="brand">Done</StateBadge>}
+    </div>
+  );
+}
+
+// ─── Prayer card (Fajr–Isha) ──────────────────────────────────────────────────
+
+function PrayerCard({
   day,
   field,
   allowedStates,
-  label,
+  prayerTime,
+  expanded,
+  onToggleExpand,
+  isMobile,
 }: {
   day: TrackerDay;
-  field: (typeof FARZ_FIELDS)[number];
+  field: (typeof FARZ_FIELDS_ORDERED)[number];
   allowedStates: FarzSalahState[] | undefined;
-  label: string;
+  prayerTime: string | undefined;
+  expanded: boolean;
+  onToggleExpand: () => void;
+  isMobile: boolean;
 }) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector(
     (s) => s.auth.session?.user?.id ?? s.auth.user?.id ?? ""
   );
   const state = day[field] as FarzSalahState | null;
-  const [open, setOpen] = useState(false);
   const options = allowedStates ?? FARZ_SALAH_STATES;
-  const styles = getFarzCellClasses(state);
+  const variant = getPrayerVariant(state);
 
   const handleSelect = (value: FarzSalahState | null) => {
     const previous = state;
@@ -120,89 +355,117 @@ function PrayerLoggingRow({
         previousValue: previous,
       })
     ).catch(() => {});
-    setOpen(false);
+    if (expanded) onToggleExpand();
   };
 
-  const done = isFarzCompleted(state);
-  const doneLabel =
-    state === "mosque"
-      ? "Mosque"
-      : state === "on_time"
-        ? "On time"
-        : state === "qaza"
-          ? "Qaza"
-          : state === "missed"
-            ? "Missed"
-            : state === "not_applicable"
-              ? "N/A"
-              : undefined;
+  const optionsList = (
+    <PrayerOptionsList
+      options={options}
+      currentState={state}
+      onSelect={handleSelect}
+    />
+  );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setOpen((o) => !o);
-            }
-          }}
-          className={cn(
-            "flex items-center gap-3 rounded-lg min-h-[48px] px-3 py-2 cursor-pointer select-none transition-colors duration-150",
-            styles.bg,
-            styles.hover
-          )}
-        >
-          <div className="shrink-0 w-12 h-10 flex items-center justify-center rounded-md overflow-hidden">
-            <FarzIcon state={state} />
-          </div>
-          <span className="flex-1 text-sm font-medium text-foreground">
-            {label}
+    <div>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggleExpand}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggleExpand();
+          }
+        }}
+        className={cn(
+          getCardClasses(variant),
+          "flex items-center gap-3 px-4 py-3"
+        )}
+      >
+        {PRAYER_ICONS[field]}
+        <div className="flex flex-1 flex-col min-w-0">
+          <span className="text-sm font-medium leading-tight">
+            {PRAYER_LABEL[field]}
           </span>
-          <DonePill done={done} label={done ? undefined : doneLabel} />
+          {!state && (
+            <span className="text-xs text-semantics-base-fg-muted-2 leading-tight">
+              Tap to log
+            </span>
+          )}
         </div>
-      </PopoverTrigger>
-      <PopoverContent side="bottom" align="start" className="w-auto p-1">
-        <div className="flex flex-col gap-0.5">
-          {options.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => handleSelect(s)}
-              className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-semantics-base-bg-hover"
-            >
-              <FarzIcon state={s} />
-              <span>{FARZ_LABELS[s]}</span>
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => handleSelect(null)}
-            className="flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-semantics-base-fg-muted hover:bg-semantics-base-bg-hover"
-          >
-            <Minus className="h-5 w-5 shrink-0" />
-            <span>Clear</span>
-          </button>
-        </div>
-      </PopoverContent>
-    </Popover>
+        {state && (
+          <StateBadge variant={variant}>
+            {PRAYER_STATE_LABEL[state]}
+          </StateBadge>
+        )}
+        {prayerTime && (
+          <span className="text-xs text-semantics-base-fg-muted shrink-0">
+            {prayerTime}
+          </span>
+        )}
+       
+      </div>
+
+      {!isMobile && (
+        <InlineExpand open={expanded}>{optionsList}</InlineExpand>
+      )}
+
+      {isMobile && (
+        <Sheet
+          open={expanded}
+          onOpenChange={(o) => {
+            if (!o) onToggleExpand();
+          }}
+        >
+          <SheetContent side="bottom" className="rounded-t-2xl pb-8" hideCloseButton>
+            <SheetHeader className="pb-1 pt-5 px-4">
+              <SheetTitle className="flex items-center gap-2 text-base font-semibold">
+                {PRAYER_ICONS[field]}
+                {PRAYER_LABEL[field]}
+              </SheetTitle>
+            </SheetHeader>
+            {optionsList}
+          </SheetContent>
+        </Sheet>
+      )}
+    </div>
   );
 }
 
-/** Fasting: single large pill row. Left icon + label, right DONE/SKIPPED. Click toggles. */
-function FastingPillRow({ day }: { day: TrackerDay }) {
+// ─── Rakat card (Taraweeh / Tahajud) ─────────────────────────────────────────
+
+function RakatCard({
+  day,
+  field,
+  label,
+  icon,
+  options,
+  expanded,
+  onToggleExpand,
+  isMobile,
+}: {
+  day: TrackerDay;
+  field: "taraweeh" | "tahajud";
+  label: string;
+  icon: React.ReactNode;
+  options: readonly number[];
+  expanded: boolean;
+  onToggleExpand: () => void;
+  isMobile: boolean;
+}) {
   const dispatch = useAppDispatch();
   const userId = useAppSelector(
     (s) => s.auth.session?.user?.id ?? s.auth.user?.id ?? ""
   );
-  const value = day.fasting;
+  const value = (day[field] ?? 0) as number;
+  const logged = value > 0;
 
-  const handleToggle = () => {
-    const next = !value;
+  const handleSelect = (n: number) => {
+    const previous = day[field];
+    const next = n === 0 ? null : n;
     dispatch(
-      updateDayField({ dayNumber: day.day_number, field: "fasting", value: next })
+      updateDayField({ dayNumber: day.day_number, field, value: next })
     );
     dispatch(
       updateTrackerField({
@@ -210,67 +473,122 @@ function FastingPillRow({ day }: { day: TrackerDay }) {
         year: day.year,
         dayNumber: day.day_number,
         date: day.date,
-        field: "fasting",
-        value: next,
-        previousValue: value,
+        field,
+        value: next ?? 0,
+        previousValue: (previous ?? 0) as number,
       })
     ).catch(() => {});
+    if (expanded) onToggleExpand();
   };
 
+  const grid = (
+    <RakatGrid options={options} currentValue={value} onSelect={handleSelect} />
+  );
+
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={handleToggle}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleToggle();
-        }
-      }}
-      className={cn(
-        "flex items-center gap-3 rounded-full min-h-[52px] px-4 py-3 cursor-pointer select-none transition-colors duration-150",
-        value
-          ? "bg-semantics-brand-bg-glow hover:bg-semantics-brand-bg-glow-hover"
-          : "bg-semantics-base-bg-muted-default hover:bg-semantics-base-bg-muted-hover"
-      )}
-    >
-      <Sun className="h-5 w-5 shrink-0 text-semantics-base-fg-muted" />
-      <span className="flex-1 text-sm font-medium text-foreground">Fasting</span>
-      <span
+    <div>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggleExpand}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggleExpand();
+          }
+        }}
         className={cn(
-          "rounded-full px-2.5 py-0.5 text-xs font-medium",
-          value
-            ? "bg-semantics-brand-bg-soft-default text-semantics-brand-fg-bold"
-            : "text-semantics-base-fg-muted"
+          getCardClasses(logged ? "brand" : "base"),
+          "flex items-center gap-3 px-4 py-3"
         )}
       >
-        {value ? "DONE" : "SKIPPED"}
-      </span>
+        {icon}
+        <div className="flex flex-1 flex-col min-w-0">
+          <span className="text-sm font-medium leading-tight">{label}</span>
+          {!logged && (
+            <span className="text-xs text-semantics-base-fg-muted-2 leading-tight">
+              Tap to log
+            </span>
+          )}
+        </div>
+        {logged && (
+          <StateBadge variant="brand">{value} Rakat</StateBadge>
+        )}
+      </div>
+
+      {!isMobile && <InlineExpand open={expanded}>{grid}</InlineExpand>}
+
+      {isMobile && (
+        <Sheet
+          open={expanded}
+          onOpenChange={(o) => {
+            if (!o) onToggleExpand();
+          }}
+        >
+          <SheetContent side="bottom" className="rounded-t-2xl pb-8" hideCloseButton>
+            <SheetHeader className="pb-1 pt-5 px-4">
+              <SheetTitle className="flex items-center gap-2 text-base font-semibold">
+                {icon}
+                {label}
+              </SheetTitle>
+            </SheetHeader>
+            {grid}
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }
 
+// ─── Main card ────────────────────────────────────────────────────────────────
+
 type TodayLoggingCardProps = {
   allowedFarzStates: FarzSalahState[] | null;
+  prayerTimings: PrayerTimings | null;
 };
 
-export function TodayLoggingCard({ allowedFarzStates }: TodayLoggingCardProps) {
+export function TodayLoggingCard({
+  allowedFarzStates,
+  prayerTimings,
+}: TodayLoggingCardProps) {
   const dispatch = useAppDispatch();
   const { user, session, initialized } = useAuth();
   const userId = user?.id ?? session?.user?.id;
   const { days, status, error } = useTracker();
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const isMobile = useIsMobile();
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
+  const todayStr = format(new Date(), "yyyy-MM-dd");
   const todayDay = useMemo(
     () => days.find((d) => d.date === todayStr) ?? null,
     [days, todayStr]
   );
 
   const handleRetry = () => {
-    if (userId) {
-      dispatch(fetchTrackerData({ userId, year: undefined }));
-    }
+    if (userId) dispatch(fetchTrackerData({ userId, year: undefined }));
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedCard((prev) => (prev === id ? null : id));
+  };
+
+  const handleBooleanToggle = (
+    day: TrackerDay,
+    field: "quran" | "charity" | "fasting"
+  ) => {
+    const next = !day[field];
+    dispatch(updateDayField({ dayNumber: day.day_number, field, value: next }));
+    dispatch(
+      updateTrackerField({
+        userId: userId ?? "",
+        year: day.year,
+        dayNumber: day.day_number,
+        date: day.date,
+        field,
+        value: next,
+        previousValue: day[field],
+      })
+    ).catch(() => {});
   };
 
   if (!initialized || !userId) {
@@ -306,14 +624,16 @@ export function TodayLoggingCard({ allowedFarzStates }: TodayLoggingCardProps) {
   if (status === "loading" || status === "idle") {
     return (
       <Card className="border-semantics-base-border-1 bg-card">
-        <CardHeader className="pb-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-            Today&apos;s logging
-          </p>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-3 w-24 rounded" />
+            <Skeleton className="h-3 w-10 rounded" />
+          </div>
+          <Skeleton className="mt-2 h-1.5 w-full rounded-full" />
         </CardHeader>
-        <CardContent className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+        <CardContent className="space-y-2">
+          {Array.from({ length: 10 }, (_, i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-xl" />
           ))}
         </CardContent>
       </Card>
@@ -323,11 +643,6 @@ export function TodayLoggingCard({ allowedFarzStates }: TodayLoggingCardProps) {
   if (!todayDay) {
     return (
       <Card className="border-semantics-base-border-1 bg-card">
-        <CardHeader className="pb-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-            Today&apos;s logging
-          </p>
-        </CardHeader>
         <CardContent className="py-8 text-center">
           <p className="text-sm text-semantics-base-fg-muted">
             Today is not a Ramadan day, or data is still loading.
@@ -338,109 +653,141 @@ export function TodayLoggingCard({ allowedFarzStates }: TodayLoggingCardProps) {
   }
 
   const day = todayDay;
+  const completed = countCompleted(day);
+  const total = 10;
 
   return (
-    <Card className="border-semantics-base-border-1 bg-card overflow-hidden transition-shadow">
-      <CardHeader className="pb-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-          Today&apos;s logging
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Fasting — large pill */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-            <Sun className="h-3.5 w-3.5" />
-            <span>Fasting</span>
+    <div className="border-semantics-base-border-1 bg-card overflow-hidden">
+      <div className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-sm font-semibold text-foreground">
+              {format(new Date(), "EEEE, MMM d")}
+            </p>
+            <p className="text-xs text-semantics-base-fg-muted">
+              Ramadan · Day {day.day_number}
+            </p>
           </div>
-          <FastingPillRow day={day} />
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-sm font-semibold text-semantics-brand-fg-link">
+              {completed} / {total}
+            </span>
+            <span className="text-xs text-semantics-base-fg-muted">completed</span>
+          </div>
         </div>
+        <div className="mt-2 h-1.5 w-full rounded-full bg-semantics-base-bg-secondary overflow-hidden">
+          <div
+            className="h-full rounded-full bg-semantics-brand-bg transition-all duration-500"
+            style={{ width: `${(completed / total) * 100}%` }}
+          />
+        </div>
+      </div>
 
-        {/* Prayers — row + bottom popover */}
+      <div className="space-y-5">
+        {/* Salah */}
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-            <Landmark className="h-3.5 w-3.5" />
-            <span>Prayers</span>
-          </div>
-          <div className="space-y-2">
-            {FARZ_FIELDS.map((field) => (
-              <PrayerLoggingRow
+          <SectionLabel>Salah</SectionLabel>
+          {FARZ_FIELDS_ORDERED.map((field) => {
+            const timingKey = FARZ_TO_TIMING_KEY[field];
+            const rawTime = prayerTimings?.[timingKey];
+            const prayerTime = rawTime ? formatPrayerTime(rawTime) : undefined;
+            return (
+              <PrayerCard
                 key={field}
                 day={day}
                 field={field}
                 allowedStates={allowedFarzStates ?? undefined}
-                label={FARZ_LABELS_MAP[field]}
+                prayerTime={prayerTime}
+                expanded={expandedCard === field}
+                onToggleExpand={() => toggleExpand(field)}
+                isMobile={isMobile}
               />
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Taraweeh — X Rakat or placeholder */}
+        {/* Ibadah */}
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-            <Moon className="h-3.5 w-3.5" />
-            <span>Taraweeh</span>
-          </div>
-          <LoggingRow
-            label="Taraweeh"
-            done={(day.taraweeh ?? 0) > 0}
-            doneLabel={(day.taraweeh ?? 0) > 0 ? undefined : "—"}
-            labelWhenDone={
-              (day.taraweeh ?? 0) > 0 ? `${day.taraweeh} Rakat` : undefined
+          <SectionLabel>Ibadah</SectionLabel>
+          <BooleanCard
+            icon={
+              <Sun className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />
             }
-          >
-            <TaraweehTrackerCell day={day} />
-          </LoggingRow>
+            label="Fasting"
+            value={day.fasting}
+            onToggle={() => handleBooleanToggle(day, "fasting")}
+          />
+          <BooleanCard
+            icon={
+              <BookOpen className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />
+            }
+            label="Quran"
+            value={day.quran}
+            onToggle={() => handleBooleanToggle(day, "quran")}
+          />
+          <BooleanCard
+            icon={
+              <Heart className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />
+            }
+            label="Charity"
+            value={day.charity}
+            onToggle={() => handleBooleanToggle(day, "charity")}
+          />
+          <RakatCard
+            day={day}
+            field="taraweeh"
+            label="Taraweeh"
+            icon={
+              <Moon className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />
+            }
+            options={TARAWEEH_OPTIONS}
+            expanded={expandedCard === "taraweeh"}
+            onToggleExpand={() => toggleExpand("taraweeh")}
+            isMobile={isMobile}
+          />
+          <RakatCard
+            day={day}
+            field="tahajud"
+            label="Tahajud"
+            icon={
+              <Star className="h-5 w-5 text-semantics-base-fg-muted shrink-0" />
+            }
+            options={TAHAJUD_OPTIONS}
+            expanded={expandedCard === "tahajud"}
+            onToggleExpand={() => toggleExpand("tahajud")}
+            isMobile={isMobile}
+          />
         </div>
-
-        {/* Tahajud */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-            <Moon className="h-3.5 w-3.5" />
-            <span>Tahajud</span>
-          </div>
-          <LoggingRow label="Tahajud" done={(day.tahajud ?? 0) > 0}>
-            <TahajudTrackerCell day={day} />
-          </LoggingRow>
-        </div>
-
-        {/* Quran */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-            <BookOpen className="h-3.5 w-3.5" />
-            <span>Quran</span>
-          </div>
-          <LoggingRow label="Quran" done={day.quran}>
-            <TrackerCell day={day} field="quran" />
-          </LoggingRow>
-        </div>
-
-        {/* Charity */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-semantics-base-fg-muted">
-            <Heart className="h-3.5 w-3.5" />
-            <span>Charity</span>
-          </div>
-          <LoggingRow label="Charity" done={day.charity}>
-            <TrackerCell day={day} field="charity" />
-          </LoggingRow>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
+
+// ─── Gender + prayer times wrapper ───────────────────────────────────────────
 
 export function TodayLoggingCardWithGender() {
   const { user, session } = useAuth();
   const userId = user?.id ?? session?.user?.id;
   const [gender, setGender] = useState<"male" | "female" | null>(null);
+  const [prayerTimings, setPrayerTimings] = useState<PrayerTimings | null>(
+    null
+  );
 
   useEffect(() => {
     if (!userId) return;
     getUserSettings(userId)
-      .then((row) => {
+      .then(async (row) => {
         const g = row?.gender;
         setGender(g === "male" || g === "female" ? g : null);
+
+        const lat = row?.latitude ?? null;
+        const lng = row?.longitude ?? null;
+        const method = row?.calculation_method ?? 2;
+
+        if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
+          const timings = await getPrayerTimings(lat, lng, method);
+          setPrayerTimings(timings);
+        }
       })
       .catch(() => setGender(null));
   }, [userId]);
@@ -450,5 +797,10 @@ export function TodayLoggingCardWithGender() {
     [gender]
   );
 
-  return <TodayLoggingCard allowedFarzStates={allowedFarzStates} />;
+  return (
+    <TodayLoggingCard
+      allowedFarzStates={allowedFarzStates}
+      prayerTimings={prayerTimings}
+    />
+  );
 }
