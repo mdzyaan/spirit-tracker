@@ -11,8 +11,9 @@ import {
 } from "@/services/prayer-times.service";
 import type { NextPrayer } from "@/services/prayer-times.service";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Moon } from "lucide-react";
+import { Moon, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export function GreetingHeader() {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ export function GreetingHeader() {
   const [nextPrayer, setNextPrayer] = useState<NextPrayer | null>(null);
   const [secondsUntil, setSecondsUntil] = useState<number>(0);
   const [prayerLoading, setPrayerLoading] = useState(true);
+  const [locationMissing, setLocationMissing] = useState(false);
 
   const displayName = user?.name?.trim() || "there";
   const englishDate = format(new Date(), "EEEE, d MMMM yyyy");
@@ -49,7 +51,10 @@ export function GreetingHeader() {
         const lat = row?.latitude ?? null;
         const lng = row?.longitude ?? null;
         const method = row?.calculation_method ?? 2;
-        if (lat === null || lng === null) return;
+        if (lat === null || lng === null) {
+          setLocationMissing(true);
+          return;
+        }
         const timings = await getPrayerTimings(lat, lng, method);
         if (!timings || cancelled) return;
         const next = getNextPrayer(timings);
@@ -74,6 +79,7 @@ export function GreetingHeader() {
   }, [nextPrayer]);
 
   const showPrayer = !prayerLoading && nextPrayer !== null;
+  const showRight = prayerLoading || showPrayer || locationMissing;
 
   return (
     <div className="rounded-2xl border border-semantics-base-border-1 bg-card px-6 py-6 flex gap-4 overflow-hidden">
@@ -98,8 +104,12 @@ export function GreetingHeader() {
         </div>
       </div>
 
+      {/* ── Vertical divider ── */}
+      {showRight && (
+        <div className="w-px bg-semantics-base-border-1 self-stretch shrink-0" />
+      )}
 
-      {/* ── Right: next prayer hero ── */}
+      {/* ── Right: next prayer or location CTA ── */}
       {prayerLoading ? (
         <div className="flex flex-col items-center justify-center gap-2 w-28 shrink-0">
           <Skeleton className="h-3 w-20 rounded" />
@@ -126,6 +136,14 @@ export function GreetingHeader() {
             {formatCountdown(secondsUntil)}
           </p>
         </div>
+      ) : locationMissing ? (
+        <Link href="/settings" className="shrink-0">
+          <div className="flex flex-col items-center justify-center gap-1.5 rounded-xl bg-semantics-base-bg-muted px-4 py-4 w-32 text-center transition-colors hover:bg-semantics-base-bg-soft cursor-pointer">
+            <MapPin className="h-4 w-4 text-semantics-base-fg-muted" />
+            <p className="text-xs font-semibold text-foreground leading-tight">Set location</p>
+            <p className="text-[10px] text-semantics-base-fg-muted leading-tight">for prayer times</p>
+          </div>
+        </Link>
       ) : null}
     </div>
   );
