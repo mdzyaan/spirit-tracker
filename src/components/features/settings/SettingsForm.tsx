@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { setTheme } from "@/store/slices/uiSlice";
+// import { setTheme } from "@/store/slices/uiSlice";
 import { setUser } from "@/store/slices/authSlice";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export function SettingsForm() {
-  const theme = useAppSelector((s) => (s as { ui: { theme: "light" | "dark" } }).ui.theme);
+  // const theme = useAppSelector((s) => (s as { ui: { theme: "light" | "dark" } }).ui.theme);
   const user = useAppSelector((s) => s.auth.user);
   const dispatch = useAppDispatch();
 
