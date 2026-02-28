@@ -21,7 +21,12 @@ import Image from "next/image";
 
 const RAMADAN_HIJRI_MONTH = 9;
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
+
+const RAMADAN_QUICK_DATES = [
+  { label: "Feb 18", value: "2025-02-18" },
+  { label: "Feb 19", value: "2025-02-19" },
+] as const;
 
 type FormState = {
   latitude: number | null;
@@ -154,7 +159,8 @@ export function OnboardingForm() {
         <CardDescription>
           {step === 1 && "Set your location for prayer times and Hijri dates."}
           {step === 2 && "Choose your gender."}
-          {step === 3 && "Review and save."}
+          {step === 3 && "When did Ramadan start for you?"}
+          {step === 4 && "Review and save."}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -263,6 +269,58 @@ export function OnboardingForm() {
 
         {step === 3 && (
           <>
+            <div className="space-y-4">
+              <div className="flex gap-3">
+                {RAMADAN_QUICK_DATES.map(({ label, value }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({ ...prev, ramadan_override_start: value }))
+                    }
+                    className={cn(
+                      "flex-1 rounded-lg border-2 py-3 text-sm font-medium transition-colors",
+                      form.ramadan_override_start === value
+                        ? "border-primary bg-muted/50 text-foreground"
+                        : "border-border text-muted-foreground hover:border-muted-foreground/50"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ramadan-custom-date">Or pick a custom date</Label>
+                <input
+                  id="ramadan-custom-date"
+                  type="date"
+                  value={form.ramadan_override_start ?? ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      ramadan_override_start: e.target.value || null,
+                    }))
+                  }
+                  className={cn(
+                    "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm",
+                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  )}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setStep(2)}>
+                Back
+              </Button>
+              <Button type="button" onClick={() => setStep(4)}>
+                Next
+              </Button>
+            </div>
+          </>
+        )}
+
+        {step === 4 && (
+          <>
             <div className="space-y-3 text-sm">
               <p className="text-muted-foreground">
                 Location:{" "}
@@ -271,6 +329,15 @@ export function OnboardingForm() {
                   : "—"}
                 {form.country && ` · ${form.country}`}
               </p>
+              {form.ramadan_override_start && (
+                <p className="text-muted-foreground">
+                  Ramadan start:{" "}
+                  {new Date(form.ramadan_override_start + "T00:00:00").toLocaleDateString(
+                    undefined,
+                    { month: "long", day: "numeric", year: "numeric" }
+                  )}
+                </p>
+              )}
               <div className="space-y-2">
                 <Label>Gender (confirm or change)</Label>
                 <div className="flex gap-4 justify-center flex-wrap">
@@ -343,7 +410,7 @@ export function OnboardingForm() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => setStep(2)}>
+              <Button type="button" variant="outline" onClick={() => setStep(3)}>
                 Back
               </Button>
               <Button

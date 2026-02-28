@@ -1,27 +1,35 @@
-"use client"
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { AppShell } from "@/components/AppShell";
 
-import { AppSidebar } from "@/components/app-sidebar"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import Header from "@/components/header"
-
-export default function MainAppLayout({
+export default async function MainAppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex flex-col h-screen w-full">
-      <SidebarProvider
-        className="flex-1 !min-h-0 overflow-hidden"
-      >
-        <AppSidebar />
-        <div className="flex flex-col flex-1 min-w-0 bg-background overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-auto bg-background md:rounded-tl-xl no-scrollbar">
-            {children}
-          </main>
-        </div>
-      </SidebarProvider>
-    </div>
-  )
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: settings } = await supabase
+    .from("user_settings")
+    .select("gender, latitude, longitude, country")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const isComplete =
+    !!settings?.gender &&
+    (!!settings?.country || settings?.latitude != null);
+
+  if (!isComplete) {
+    redirect("/onboarding");
+  }
+
+  return <AppShell>{children}</AppShell>;
 }

@@ -10,7 +10,7 @@ import { updateDayField } from "@/store/slices/trackerSlice";
 import { updateTrackerField } from "@/store/thunks/trackerThunks";
 import type { TrackerDay } from "@/store/slices/trackerSlice";
 import type { FarzSalahState } from "@/types/tracker";
-import { getFarzStatesForGender, FARZ_SALAH_STATES } from "@/types/tracker";
+import { getFarzStatesForGender, FARZ_SALAH_STATES, isFarzCompleted } from "@/types/tracker";
 import { FarzIcon, FARZ_LABELS } from "@/components/features/tracker/PrayerTrackerCell";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -118,11 +118,11 @@ function getPrayerVariant(state: FarzSalahState | null): CardVariant {
 
 function countCompleted(day: TrackerDay): number {
   return [
-    day.fajr !== null,
-    day.dhuhr !== null,
-    day.asr !== null,
-    day.maghrib !== null,
-    day.isha !== null,
+    isFarzCompleted(day.fajr),
+    isFarzCompleted(day.dhuhr),
+    isFarzCompleted(day.asr),
+    isFarzCompleted(day.maghrib),
+    isFarzCompleted(day.isha),
   ].filter(Boolean).length;
 }
 

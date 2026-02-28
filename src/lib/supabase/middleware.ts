@@ -51,15 +51,17 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirect);
   }
 
-  // Progressive onboarding: require user_settings for protected routes
+  // Progressive onboarding: require completed user_settings for protected routes
   if (session && (isProtected || isOnboardingPage)) {
     const { data: settings } = await supabase
       .from("user_settings")
-      .select("id")
+      .select("gender, latitude, longitude, country")
       .eq("user_id", session.user.id)
       .maybeSingle();
 
-    const hasSettings = !!settings;
+    const hasSettings =
+      !!settings?.gender &&
+      (!!settings?.country || settings?.latitude != null);
 
     if (isProtected && !hasSettings) {
       const redirect = new URL("/onboarding", request.url);
